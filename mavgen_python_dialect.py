@@ -103,12 +103,10 @@ class x25crc(object):
         '''add in some more bytes'''
         accum = self.crc
         import array
-        bytes_array = array.array('B')
-        print(buf)
-        try:  # if buf is bytes
-            bytes_array.frombytes(buf)
-        except TypeError:  # if buf is str
-            bytes_array.frombytes(buf.encode())
+        try:
+            bytes_array = array.array('B', list(buf))
+        except:
+            bytes_array = array.array('B', list(buf.encode()))
         self.accumulate(bytes_array)
 
 class MAVLink_header(object):
@@ -1408,7 +1406,6 @@ class MAVLink(object):
             #except:
             #    raise MAVError("Unable to unpack MAVLink header")
             magic, mlen, seq, srcSystem, srcComponent, msgId = ustruct.unpack("<BBBBBB",msgbuf[:headerlen])
-            print(magic)
             incompat_flags = 0
             compat_flags = 0
             

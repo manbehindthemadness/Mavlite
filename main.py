@@ -16,15 +16,10 @@ master = mavutil.mavlink_connection("/dev/ttyACM0", baud=57600 )
 # Make sure the connection is valid
 master.wait_heartbeat()
 
-print("Got Heartbeat")
-
-master.reboot_autopilot()
-
-#print("Loaded")
-## Get some information !
-#while True:
-#    try:
-#        print(master.recv_match().to_dict())
-#    except:
-#        pass
-#    time.sleep(0.1)
+# Get some information !
+while True:
+    try:
+        print(master.recv_match().to_dict())
+    except:
+        pass
+    time.sleep(0.1)

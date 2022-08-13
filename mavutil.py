@@ -7,7 +7,7 @@ Released under GNU LGPL version 3 or later
 '''
 from builtins import object
 
-import math, struct, time, os, array, sys
+import math, struct, time, os, sys
 import select
 
 is_py3 = sys.version_info >= (3,0)
@@ -977,10 +977,7 @@ class mavserial(mavfile):
             waiting = self.port.any()
             if waiting < n:
                 n = waiting
-        print("MessageLength: " + str(self.port.any()))
         ret = self.port.read(n)
-
-        print("Read Data: " + str(ret))
         return ret
 
     def write(self, buf):
@@ -1450,27 +1447,6 @@ def mode_string_acm(mode_number):
     if mode_number in mode_mapping_acm:
         return mode_mapping_acm[mode_number]
     return "Mode(%u)" % mode_number
-
-class x25crc(object):
-    '''CRC-16/MCRF4XX - based on checksum.h from mavlink library'''
-    def __init__(self, buf=''):
-        self.crc = 0xffff
-        self.accumulate(buf)
-
-    def accumulate(self, buf):
-        '''add in some more bytes'''
-        byte_buf = array.array('B')
-        if isinstance(buf, array.array):
-            byte_buf.extend(buf)
-        else:
-            byte_buf.fromstring(buf)
-        accum = self.crc
-        for b in byte_buf:
-            tmp = b ^ (accum & 0xff)
-            tmp = (tmp ^ (tmp<<4)) & 0xFF
-            accum = (accum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4)
-            accum = accum & 0xFFFF
-        self.crc = accum
 
 def decode_bitmask(messagetype, field, value):
     try:
