@@ -9,7 +9,7 @@ Note: this file has been auto-generated. DO NOT EDIT
 import array
 import hashlib
 import json
-import struct
+import ustruct
 import sys
 import time
 from builtins import object, range
@@ -104,12 +104,11 @@ class x25crc(object):
         accum = self.crc
         import array
         bytes_array = array.array('B')
+        print(buf)
         try:  # if buf is bytes
             bytes_array.frombytes(buf)
         except TypeError:  # if buf is str
             bytes_array.frombytes(buf.encode())
-        except AttributeError:  # Python < 3.2
-            bytes_array.fromstring(buf)
         self.accumulate(bytes_array)
 
 class MAVLink_header(object):
@@ -126,7 +125,7 @@ class MAVLink_header(object):
 
     def pack(self, force_mavlink1=False):
         if WIRE_PROTOCOL_VERSION == "2.0" and not force_mavlink1:
-            return struct.pack(
+            return ustruct.pack(
                 "<BBBBBBBHB",
                 253,
                 self.mlen,
@@ -138,7 +137,7 @@ class MAVLink_header(object):
                 self.msgId & 0xFFFF,
                 self.msgId >> 16,
             )
-        return struct.pack(
+        return ustruct.pack(
             "<BBBBBB",
             PROTOCOL_MARKER_V1,
             self.mlen,
@@ -258,7 +257,7 @@ class MAVLink_message(object):
 
     def sign_packet(self, mav):
         h = hashlib.new("sha256")
-        self._msgbuf += struct.pack("<BQ", mav.signing.link_id, mav.signing.timestamp)[:7]
+        self._msgbuf += ustruct.pack("<BQ", mav.signing.link_id, mav.signing.timestamp)[:7]
         h.update(mav.signing.secret_key)
         h.update(self._msgbuf)
         sig = h.digest()[:6]
@@ -292,9 +291,9 @@ class MAVLink_message(object):
         self._msgbuf = self._header.pack(force_mavlink1=force_mavlink1) + self._payload
         crc = x25crc(self._msgbuf[1:])
         if True:  # using CRC extra
-            crc.accumulate_str(struct.pack("B", crc_extra))
+            crc.accumulate_str(ustruct.pack("B", crc_extra))
         self._crc = crc.crc
-        self._msgbuf += struct.pack("<H", self._crc)
+        self._msgbuf += ustruct.pack("<H", self._crc)
         if mav.signing.sign_outgoing and not force_mavlink1:
             self.sign_packet(mav)
         return self._msgbuf
@@ -520,26 +519,6 @@ enums["MAV_CMD"][16].param[4] = """Desired yaw angle at waypoint (rotary wing). 
 enums["MAV_CMD"][16].param[5] = """Latitude"""
 enums["MAV_CMD"][16].param[6] = """Longitude"""
 enums["MAV_CMD"][16].param[7] = """Altitude"""
-MAV_CMD_NAV_LOITER_TURNS = 18
-enums["MAV_CMD"][18] = EnumEntry("MAV_CMD_NAV_LOITER_TURNS", """Loiter around this waypoint for X turns""")
-enums["MAV_CMD"][18].has_location = True
-enums["MAV_CMD"][18].param[1] = """Number of turns."""
-enums["MAV_CMD"][18].param[2] = """Empty"""
-enums["MAV_CMD"][18].param[3] = """Radius around waypoint. If positive loiter clockwise, else counter-clockwise"""
-enums["MAV_CMD"][18].param[4] = """Forward moving aircraft this sets exit xtrack location: 0 for center of loiter wp, 1 for exit location. Else, this is desired yaw angle. NaN to use the current system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.)."""
-enums["MAV_CMD"][18].param[5] = """Latitude"""
-enums["MAV_CMD"][18].param[6] = """Longitude"""
-enums["MAV_CMD"][18].param[7] = """Altitude"""
-MAV_CMD_NAV_LOITER_TIME = 19
-enums["MAV_CMD"][19] = EnumEntry("MAV_CMD_NAV_LOITER_TIME", """Loiter around this waypoint for X seconds""")
-enums["MAV_CMD"][19].has_location = True
-enums["MAV_CMD"][19].param[1] = """Loiter time."""
-enums["MAV_CMD"][19].param[2] = """Empty"""
-enums["MAV_CMD"][19].param[3] = """Radius around waypoint. If positive loiter clockwise, else counter-clockwise."""
-enums["MAV_CMD"][19].param[4] = """Forward moving aircraft this sets exit xtrack location: 0 for center of loiter wp, 1 for exit location. Else, this is desired yaw angle.  NaN to use the current system yaw heading mode (e.g. yaw towards next waypoint, yaw to home, etc.)."""
-enums["MAV_CMD"][19].param[5] = """Latitude"""
-enums["MAV_CMD"][19].param[6] = """Longitude"""
-enums["MAV_CMD"][19].param[7] = """Altitude"""
 MAV_CMD_NAV_RETURN_TO_LAUNCH = 20
 enums["MAV_CMD"][20] = EnumEntry("MAV_CMD_NAV_RETURN_TO_LAUNCH", """Return to launch location""")
 enums["MAV_CMD"][20].param[1] = """Empty"""
@@ -606,6 +585,15 @@ enums["MAV_CMD"][180].param[4] = """Empty"""
 enums["MAV_CMD"][180].param[5] = """Empty"""
 enums["MAV_CMD"][180].param[6] = """Empty"""
 enums["MAV_CMD"][180].param[7] = """Empty"""
+MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN = 246
+enums["MAV_CMD"][246] = EnumEntry("MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN", """Request the reboot or shutdown of system components.""")
+enums["MAV_CMD"][246].param[1] = """0: Do nothing for autopilot, 1: Reboot autopilot, 2: Shutdown autopilot, 3: Reboot autopilot and keep it in the bootloader until upgraded."""
+enums["MAV_CMD"][246].param[2] = """0: Do nothing for onboard computer, 1: Reboot onboard computer, 2: Shutdown onboard computer, 3: Reboot onboard computer and keep it in the bootloader until upgraded."""
+enums["MAV_CMD"][246].param[3] = """WIP: 0: Do nothing for camera, 1: Reboot onboard camera, 2: Shutdown onboard camera, 3: Reboot onboard camera and keep it in the bootloader until upgraded"""
+enums["MAV_CMD"][246].param[4] = """WIP: 0: Do nothing for mount (e.g. gimbal), 1: Reboot mount, 2: Shutdown mount, 3: Reboot mount and keep it in the bootloader until upgraded"""
+enums["MAV_CMD"][246].param[5] = """Reserved (set to 0)"""
+enums["MAV_CMD"][246].param[6] = """Reserved (set to 0)"""
+enums["MAV_CMD"][246].param[7] = """WIP: ID (e.g. camera ID -1 for all IDs)"""
 MAV_CMD_REQUEST_MESSAGE = 512
 enums["MAV_CMD"][512] = EnumEntry("MAV_CMD_REQUEST_MESSAGE", """Request the target system(s) emit a single instance of a specified message (i.e. a "one-shot" version of MAV_CMD_SET_MESSAGE_INTERVAL).""")
 enums["MAV_CMD"][512].param[1] = """The MAVLink message ID of the requested message."""
@@ -687,82 +675,6 @@ MAV_COMP_ID_USER4 = 28
 enums["MAV_COMPONENT"][28] = EnumEntry("MAV_COMP_ID_USER4", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
 MAV_COMP_ID_USER5 = 29
 enums["MAV_COMPONENT"][29] = EnumEntry("MAV_COMP_ID_USER5", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER6 = 30
-enums["MAV_COMPONENT"][30] = EnumEntry("MAV_COMP_ID_USER6", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER7 = 31
-enums["MAV_COMPONENT"][31] = EnumEntry("MAV_COMP_ID_USER7", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER8 = 32
-enums["MAV_COMPONENT"][32] = EnumEntry("MAV_COMP_ID_USER8", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER9 = 33
-enums["MAV_COMPONENT"][33] = EnumEntry("MAV_COMP_ID_USER9", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER10 = 34
-enums["MAV_COMPONENT"][34] = EnumEntry("MAV_COMP_ID_USER10", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER11 = 35
-enums["MAV_COMPONENT"][35] = EnumEntry("MAV_COMP_ID_USER11", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER12 = 36
-enums["MAV_COMPONENT"][36] = EnumEntry("MAV_COMP_ID_USER12", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER13 = 37
-enums["MAV_COMPONENT"][37] = EnumEntry("MAV_COMP_ID_USER13", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER14 = 38
-enums["MAV_COMPONENT"][38] = EnumEntry("MAV_COMP_ID_USER14", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER15 = 39
-enums["MAV_COMPONENT"][39] = EnumEntry("MAV_COMP_ID_USER15", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER16 = 40
-enums["MAV_COMPONENT"][40] = EnumEntry("MAV_COMP_ID_USER16", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER17 = 41
-enums["MAV_COMPONENT"][41] = EnumEntry("MAV_COMP_ID_USER17", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER18 = 42
-enums["MAV_COMPONENT"][42] = EnumEntry("MAV_COMP_ID_USER18", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER19 = 43
-enums["MAV_COMPONENT"][43] = EnumEntry("MAV_COMP_ID_USER19", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER20 = 44
-enums["MAV_COMPONENT"][44] = EnumEntry("MAV_COMP_ID_USER20", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER21 = 45
-enums["MAV_COMPONENT"][45] = EnumEntry("MAV_COMP_ID_USER21", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER22 = 46
-enums["MAV_COMPONENT"][46] = EnumEntry("MAV_COMP_ID_USER22", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER23 = 47
-enums["MAV_COMPONENT"][47] = EnumEntry("MAV_COMP_ID_USER23", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER24 = 48
-enums["MAV_COMPONENT"][48] = EnumEntry("MAV_COMP_ID_USER24", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER25 = 49
-enums["MAV_COMPONENT"][49] = EnumEntry("MAV_COMP_ID_USER25", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER26 = 50
-enums["MAV_COMPONENT"][50] = EnumEntry("MAV_COMP_ID_USER26", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER27 = 51
-enums["MAV_COMPONENT"][51] = EnumEntry("MAV_COMP_ID_USER27", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER28 = 52
-enums["MAV_COMPONENT"][52] = EnumEntry("MAV_COMP_ID_USER28", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER29 = 53
-enums["MAV_COMPONENT"][53] = EnumEntry("MAV_COMP_ID_USER29", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER30 = 54
-enums["MAV_COMPONENT"][54] = EnumEntry("MAV_COMP_ID_USER30", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER31 = 55
-enums["MAV_COMPONENT"][55] = EnumEntry("MAV_COMP_ID_USER31", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER32 = 56
-enums["MAV_COMPONENT"][56] = EnumEntry("MAV_COMP_ID_USER32", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER33 = 57
-enums["MAV_COMPONENT"][57] = EnumEntry("MAV_COMP_ID_USER33", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER34 = 58
-enums["MAV_COMPONENT"][58] = EnumEntry("MAV_COMP_ID_USER34", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER35 = 59
-enums["MAV_COMPONENT"][59] = EnumEntry("MAV_COMP_ID_USER35", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER36 = 60
-enums["MAV_COMPONENT"][60] = EnumEntry("MAV_COMP_ID_USER36", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER37 = 61
-enums["MAV_COMPONENT"][61] = EnumEntry("MAV_COMP_ID_USER37", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER38 = 62
-enums["MAV_COMPONENT"][62] = EnumEntry("MAV_COMP_ID_USER38", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER39 = 63
-enums["MAV_COMPONENT"][63] = EnumEntry("MAV_COMP_ID_USER39", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER40 = 64
-enums["MAV_COMPONENT"][64] = EnumEntry("MAV_COMP_ID_USER40", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER41 = 65
-enums["MAV_COMPONENT"][65] = EnumEntry("MAV_COMP_ID_USER41", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER42 = 66
-enums["MAV_COMPONENT"][66] = EnumEntry("MAV_COMP_ID_USER42", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
-MAV_COMP_ID_USER43 = 67
-enums["MAV_COMPONENT"][67] = EnumEntry("MAV_COMP_ID_USER43", """Id for a component on privately managed MAVLink network. Can be used for any purpose but may not be published by components outside of the private network.""")
 MAV_COMP_ID_TELEMETRY_RADIO = 68
 enums["MAV_COMPONENT"][68] = EnumEntry("MAV_COMP_ID_TELEMETRY_RADIO", """Telemetry radio (e.g. SiK radio, or other component that emits RADIO_STATUS messages).""")
 MAV_COMP_ID_CAMERA = 100
@@ -939,7 +851,7 @@ class MAVLink_heartbeat_message(MAVLink_message):
         self.mavlink_version = mavlink_version
 
     def pack(self, mav, force_mavlink1=False):
-        return MAVLink_message.pack(self, mav, 50, struct.pack("<IBBBBB", self.custom_mode, self.type, self.autopilot, self.base_mode, self.system_status, self.mavlink_version), force_mavlink1=force_mavlink1)
+        return MAVLink_message.pack(self, mav, 50, ustruct.pack("<IBBBBB", self.custom_mode, self.type, self.autopilot, self.base_mode, self.system_status, self.mavlink_version), force_mavlink1=force_mavlink1)
 
 
 
@@ -994,7 +906,7 @@ class MAVLink_mission_item_message(MAVLink_message):
         self.mission_type = mission_type
 
     def pack(self, mav, force_mavlink1=False):
-        return MAVLink_message.pack(self, mav, 254, struct.pack("<fffffffHHBBBBBB", self.param1, self.param2, self.param3, self.param4, self.x, self.y, self.z, self.seq, self.command, self.target_system, self.target_component, self.frame, self.current, self.autocontinue, self.mission_type), force_mavlink1=force_mavlink1)
+        return MAVLink_message.pack(self, mav, 254, ustruct.pack("<fffffffHHBBBBBB", self.param1, self.param2, self.param3, self.param4, self.x, self.y, self.z, self.seq, self.command, self.target_system, self.target_component, self.frame, self.current, self.autocontinue, self.mission_type), force_mavlink1=force_mavlink1)
 
 
 class MAVLink_protocol_version_message(MAVLink_message):
@@ -1038,7 +950,7 @@ class MAVLink_protocol_version_message(MAVLink_message):
         self.library_version_hash = library_version_hash
 
     def pack(self, mav, force_mavlink1=False):
-        return MAVLink_message.pack(self, mav, 217, struct.pack("<HHH8B8B", self.version, self.min_version, self.max_version, self.spec_version_hash[0], self.spec_version_hash[1], self.spec_version_hash[2], self.spec_version_hash[3], self.spec_version_hash[4], self.spec_version_hash[5], self.spec_version_hash[6], self.spec_version_hash[7], self.library_version_hash[0], self.library_version_hash[1], self.library_version_hash[2], self.library_version_hash[3], self.library_version_hash[4], self.library_version_hash[5], self.library_version_hash[6], self.library_version_hash[7]), force_mavlink1=force_mavlink1)
+        return MAVLink_message.pack(self, mav, 217, ustruct.pack("<HHH8B8B", self.version, self.min_version, self.max_version, self.spec_version_hash[0], self.spec_version_hash[1], self.spec_version_hash[2], self.spec_version_hash[3], self.spec_version_hash[4], self.spec_version_hash[5], self.spec_version_hash[6], self.spec_version_hash[7], self.library_version_hash[0], self.library_version_hash[1], self.library_version_hash[2], self.library_version_hash[3], self.library_version_hash[4], self.library_version_hash[5], self.library_version_hash[6], self.library_version_hash[7]), force_mavlink1=force_mavlink1)
 
 
 mavlink_map = {
@@ -1115,7 +1027,7 @@ class MAVLink_gps_raw_int_message(MAVLink_message):
         self.yaw = yaw
 
     def pack(self, mav, force_mavlink1=False):
-        return MAVLink_message.pack(self, mav, 24, struct.pack("<QiiiHHHHBBiIIIIH", self.time_usec, self.lat, self.lon, self.alt, self.eph, self.epv, self.vel, self.cog, self.fix_type, self.satellites_visible, self.alt_ellipsoid, self.h_acc, self.v_acc, self.vel_acc, self.hdg_acc, self.yaw), force_mavlink1=force_mavlink1)
+        return MAVLink_message.pack(self, mav, 24, ustruct.pack("<QiiiHHHHBBiIIIIH", self.time_usec, self.lat, self.lon, self.alt, self.eph, self.epv, self.vel, self.cog, self.fix_type, self.satellites_visible, self.alt_ellipsoid, self.h_acc, self.v_acc, self.vel_acc, self.hdg_acc, self.yaw), force_mavlink1=force_mavlink1)
 
 
 class MAVLink_bad_data(MAVLink_message):
@@ -1169,6 +1081,50 @@ class MAVLinkSigning(object):
         self.unsigned_count = 0
         self.reject_count = 0
 
+class MAVLink_command_long_message(MAVLink_message):
+    """
+    Send a command with up to seven parameters to the MAV. The command
+    microservice is documented at
+    https://mavlink.io/en/services/command.html
+    """
+
+    id = MAVLINK_MSG_ID_COMMAND_LONG
+    name = "COMMAND_LONG"
+    fieldnames = ["target_system", "target_component", "command", "confirmation", "param1", "param2", "param3", "param4", "param5", "param6", "param7"]
+    ordered_fieldnames = ["param1", "param2", "param3", "param4", "param5", "param6", "param7", "command", "target_system", "target_component", "confirmation"]
+    fieldtypes = ["uint8_t", "uint8_t", "uint16_t", "uint8_t", "float", "float", "float", "float", "float", "float", "float"]
+    fielddisplays_by_name = {}
+    fieldenums_by_name = {"command": "MAV_CMD"}
+    fieldunits_by_name = {}
+    format = "<fffffffHBBB"
+    native_format = bytearray("<fffffffHBBB", "ascii")
+    orders = [8, 9, 7, 10, 0, 1, 2, 3, 4, 5, 6]
+    lengths = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    array_lengths = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    crc_extra = 152
+    instance_field = None
+    instance_offset = -1
+
+    def __init__(self, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7):
+        MAVLink_message.__init__(self, MAVLink_command_long_message.id, MAVLink_command_long_message.name)
+        self._fieldnames = MAVLink_command_long_message.fieldnames
+        self._instance_field = MAVLink_command_long_message.instance_field
+        self._instance_offset = MAVLink_command_long_message.instance_offset
+        self.target_system = target_system
+        self.target_component = target_component
+        self.command = command
+        self.confirmation = confirmation
+        self.param1 = param1
+        self.param2 = param2
+        self.param3 = param3
+        self.param4 = param4
+        self.param5 = param5
+        self.param6 = param6
+        self.param7 = param7
+
+    def pack(self, mav, force_mavlink1=False):
+        return MAVLink_message.pack(self, mav, 152, ustruct.pack("<fffffffHBBB", self.param1, self.param2, self.param3, self.param4, self.param5, self.param6, self.param7, self.command, self.target_system, self.target_component, self.confirmation), force_mavlink1=force_mavlink1)
+
 
 class MAVLink(object):
     """MAVLink protocol handling class"""
@@ -1200,9 +1156,10 @@ class MAVLink(object):
         self.total_receive_errors = 0
         self.startup_time = time.time()
         self.signing = MAVLinkSigning()
-        self.native = None
+        self.native = False
         if native_testing:
             self.test_buf = bytearray()
+
 
     def command_long_send(self, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7, force_mavlink1=False):
         """
@@ -1224,6 +1181,28 @@ class MAVLink(object):
 
         """
         return self.send(self.command_long_encode(target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7), force_mavlink1=force_mavlink1)
+
+    def command_long_encode(self, target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7):
+        """
+        Send a command with up to seven parameters to the MAV. The command
+        microservice is documented at
+        https://mavlink.io/en/services/command.html
+
+        target_system             : System which should execute the command (type:uint8_t)
+        target_component          : Component which should execute the command, 0 for all components (type:uint8_t)
+        command                   : Command ID (of command to send). (type:uint16_t, values:MAV_CMD)
+        confirmation              : 0: First transmission of this command. 1-255: Confirmation transmissions (e.g. for kill command) (type:uint8_t)
+        param1                    : Parameter 1 (for the specific command). (type:float)
+        param2                    : Parameter 2 (for the specific command). (type:float)
+        param3                    : Parameter 3 (for the specific command). (type:float)
+        param4                    : Parameter 4 (for the specific command). (type:float)
+        param5                    : Parameter 5 (for the specific command). (type:float)
+        param6                    : Parameter 6 (for the specific command). (type:float)
+        param7                    : Parameter 7 (for the specific command). (type:float)
+
+        """
+        return MAVLink_command_long_message(target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7)
+
 
 
     def set_callback(self, callback, *args, **kwargs):
@@ -1323,9 +1302,9 @@ class MAVLink(object):
         self.have_prefix_error = False
         if self.buf_len() >= 3:
             sbuf = self.buf[self.buf_index : 3 + self.buf_index]
-            if sys.version_info.major < 3:
-                sbuf = str(sbuf)
-            (magic, self.expected_length, incompat_flags) = struct.unpack("BBB",sbuf)
+            #if sys.version_info.major < 3:
+            #    sbuf = str(sbuf)
+            (magic, self.expected_length, incompat_flags) = ustruct.unpack("BBB",sbuf)
             if magic == PROTOCOL_MARKER_V2 and (incompat_flags & MAVLINK_IFLAG_SIGNED):
                 self.expected_length += MAVLINK_SIGNATURE_BLOCK_LEN
             self.expected_length += header_len + 2
@@ -1370,7 +1349,7 @@ class MAVLink(object):
                 msgbuf = msgbuf.tobytes()
         timestamp_buf = msgbuf[-12:-6]
         link_id = msgbuf[-13]
-        (tlow, thigh) = struct.unpack("<IH",timestamp_buf)
+        (tlow, thigh) = ustruct.unpack("<IH",timestamp_buf)
         timestamp = tlow + (thigh << 32)
 
         # see if the timestamp is acceptable
@@ -1414,26 +1393,33 @@ class MAVLink(object):
         if msgbuf[0] != PROTOCOL_MARKER_V1:
             headerlen = 10
             try:
-                magic, mlen, incompat_flags, compat_flags, seq, srcSystem, srcComponent, msgIdlow, msgIdhigh = struct.unpack("<cBBBBBBHB",msgbuf[:headerlen])
-            except struct.error as emsg:
-                raise MAVError("Unable to unpack MAVLink header: %s" % emsg)
+                magic, mlen, incompat_flags, compat_flags, seq, srcSystem, srcComponent, msgIdlow, msgIdhigh = ustruct.unpack("<cBBBBBBHB",msgbuf[:headerlen])
+            except:
+                raise MAVError("Unable to unpack MAVLink header")
             msgId = msgIdlow | (msgIdhigh << 16)
             mapkey = msgId
         else:
             headerlen = 6
-            try:
-                magic, mlen, seq, srcSystem, srcComponent, msgId = struct.unpack("<cBBBBB",msgbuf[:headerlen])
-                incompat_flags = 0
-                compat_flags = 0
-            except struct.error as emsg:
-                raise MAVError("Unable to unpack MAVLink header: %s" % emsg)
+            ## --FIX--
+            #try:
+            #    magic, mlen, seq, srcSystem, srcComponent, msgId = ustruct.unpack("<cBBBBB",msgbuf[:headerlen])
+            #    incompat_flags = 0
+            #    compat_flags = 0
+            #except:
+            #    raise MAVError("Unable to unpack MAVLink header")
+            magic, mlen, seq, srcSystem, srcComponent, msgId = ustruct.unpack("<BBBBBB",msgbuf[:headerlen])
+            print(magic)
+            incompat_flags = 0
+            compat_flags = 0
+            
+            
             mapkey = msgId
         if (incompat_flags & MAVLINK_IFLAG_SIGNED) != 0:
             signature_len = MAVLINK_SIGNATURE_BLOCK_LEN
         else:
             signature_len = 0
 
-        if ord(magic) != PROTOCOL_MARKER_V1 and ord(magic) != PROTOCOL_MARKER_V2:
+        if magic != PROTOCOL_MARKER_V1 and magic != PROTOCOL_MARKER_V2:
             raise MAVError("invalid MAVLink prefix '%s'" % magic)
         if mlen != len(msgbuf) - (headerlen + 2 + signature_len):
             raise MAVError("invalid MAVLink message length. Got %u expected %u, msgId=%u headerlen=%u" % (len(msgbuf) - (headerlen + 2 + signature_len), mlen, msgId, headerlen))
@@ -1450,9 +1436,9 @@ class MAVLink(object):
 
         # decode the checksum
         try:
-            (crc,) = struct.unpack("<H",msgbuf[-(2 + signature_len) :][:2])
-        except struct.error as emsg:
-            raise MAVError("Unable to unpack MAVLink CRC: %s" % emsg)
+            (crc,) = ustruct.unpack("<H",msgbuf[-(2 + signature_len) :][:2])
+        except:
+            raise MAVError("Unable to unpack MAVLink CRC")
         crcbuf = msgbuf[1 : -(2 + signature_len)]
         if True:
             # using CRC extra
@@ -1488,7 +1474,7 @@ class MAVLink(object):
             if not accept_signature:
                 raise MAVError("Invalid signature")
 
-        csize = type.unpacker.size
+        csize = ustruct.calcsize(type.format)
         mbuf = msgbuf[headerlen : -(2 + signature_len)]
         if len(mbuf) < csize:
             # zero pad to give right size
@@ -1497,9 +1483,9 @@ class MAVLink(object):
             raise MAVError("Bad message of type %s length %u needs %s" % (type, len(mbuf), csize))
         mbuf = mbuf[:csize]
         try:
-            t = type.unpacker.unpack(mbuf)
-        except struct.error as emsg:
-            raise MAVError("Unable to unpack MAVLink payload type=%s fmt=%s payloadLength=%u: %s" % (type, fmt, len(mbuf), emsg))
+            t = ustruct.unpack(type.format,mbuf)
+        except:
+            raise MAVError("Unable to unpack MAVLink payload")
 
         tlist = list(t)
         # handle sorted fields
@@ -1529,7 +1515,7 @@ class MAVLink(object):
                     tlist[i] = to_string(tlist[i])
                 tlist[i] = str(MAVString(tlist[i]))
         t = tuple(tlist)
-        # construct the message object
+        # conustruct the message object
         try:
             m = type(*t)
         except Exception as emsg:

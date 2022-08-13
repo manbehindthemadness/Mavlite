@@ -7,7 +7,7 @@ Released under GNU LGPL version 3 or later
 '''
 from builtins import object
 
-import math, struct, time, os, array, sys, errno
+import math, struct, time, os, array, sys
 import select
 
 is_py3 = sys.version_info >= (3,0)
@@ -953,8 +953,9 @@ class mavserial(mavfile):
         
         #ATTEMPTS TO OPEN UART CONNECTION
         uart = UART(1, self.baud)                         # init with given baudrate
-        uart.init(self.baud, bits=8, parity=None, stop=1)
+        uart.init(self.baud, bits=8, parity=None, stop=1, tx=17, rx=16)
         self.port = uart
+        #print("Attempted to establish UART connection")
         mavfile.__init__(self, None, device, source_system=source_system, source_component=source_component, use_native=use_native)
         self.rtscts = False
 
@@ -976,7 +977,10 @@ class mavserial(mavfile):
             waiting = self.port.any()
             if waiting < n:
                 n = waiting
+        print("MessageLength: " + str(self.port.any()))
         ret = self.port.read(n)
+
+        print("Read Data: " + str(ret))
         return ret
 
     def write(self, buf):
