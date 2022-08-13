@@ -11,7 +11,7 @@ from micropymavlink import mavutil
 
 #mavutil.set_dialect("mavgen_python_dialect")
 
-master = mavutil.mavlink_connection("COM11", baud=57600)
+master = mavutil.mavlink_connection("/dev/ttyACM0", baud=115200)
 
 # Make sure the connection is valid
 master.wait_heartbeat()
