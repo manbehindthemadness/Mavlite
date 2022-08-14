@@ -582,7 +582,13 @@ class mavfile(object):
         else:
             self.mav.param_set_send(self.target_system, self.target_component,
                                     parm_name.encode('utf8'), parm_value)
-
+    def distance_sensor_send(self,min_distance ,max_distance ,current_distance ,orientation, id,covariance = 255):
+        '''send distance sensor values
+        For orientation refer to:
+        https://mavlink.io/en/messages/common.html#MAV_SENSOR_ROTATION_NONE
+        '''
+        self.mav.distance_sensor_send(min_distance, max_distance, current_distance, 0, id, orientation, covariance)
+    
     def waypoint_request_list_send(self):
         '''wrapper for waypoint_request_list_send'''
         if self.mavlink10():
@@ -776,7 +782,7 @@ class mavfile(object):
         self.mav.command_long_send(self.target_system, self.target_component,
                                    mavlink.MAV_CMD_PREFLIGHT_CALIBRATION, 0,
                                    1, 1, 0, 0, 0, 0, 0)
-
+    
     def calibrate_pressure(self):
         '''calibrate pressure'''
         if self.mavlink10():

@@ -806,6 +806,7 @@ MAVLINK_MSG_ID_MISSION_REQUEST_LIST = 43
 MAVLINK_MSG_ID_MISSION_COUNT = 44
 MAVLINK_MSG_ID_MISSION_CLEAR_ALL = 45
 MAVLINK_MSG_ID_MISSION_ITEM_REACHED = 46
+MAVLINK_MSG_ID_DISTANCE_SENSOR = 132
 
 
 class MAVLink_heartbeat_message(MAVLink_message):
@@ -851,6 +852,49 @@ class MAVLink_heartbeat_message(MAVLink_message):
     def pack(self, mav, force_mavlink1=False):
         return MAVLink_message.pack(self, mav, 50, ustruct.pack("<IBBBBB", self.custom_mode, self.type, self.autopilot, self.base_mode, self.system_status, self.mavlink_version), force_mavlink1=force_mavlink1)
 
+
+class MAVLink_distance_sensor_message(MAVLink_message):
+    """
+    Distance sensor information for an onboard rangefinder.
+    """
+
+    id = MAVLINK_MSG_ID_DISTANCE_SENSOR
+    name = "DISTANCE_SENSOR"
+    fieldnames = ["time_boot_ms", "min_distance", "max_distance", "current_distance", "type", "id", "orientation", "covariance", "horizontal_fov", "vertical_fov", "quaternion", "signal_quality"]
+    ordered_fieldnames = ["time_boot_ms", "min_distance", "max_distance", "current_distance", "type", "id", "orientation", "covariance", "horizontal_fov", "vertical_fov", "quaternion", "signal_quality"]
+    fieldtypes = ["uint32_t", "uint16_t", "uint16_t", "uint16_t", "uint8_t", "uint8_t", "uint8_t", "uint8_t", "float", "float", "float", "uint8_t"]
+    fielddisplays_by_name = {}
+    fieldenums_by_name = {"type": "MAV_DISTANCE_SENSOR", "orientation": "MAV_SENSOR_ORIENTATION"}
+    fieldunits_by_name = {"time_boot_ms": "ms", "min_distance": "cm", "max_distance": "cm", "current_distance": "cm", "covariance": "cm^2", "horizontal_fov": "rad", "vertical_fov": "rad", "signal_quality": "%"}
+    format = "<IHHHBBBBff4fB"
+    native_format = bytearray("<IHHHBBBBfffB", "ascii")
+    orders = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+    lengths = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 4, 1]
+    array_lengths = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 0]
+    crc_extra = 85
+    instance_field = "id"
+    instance_offset = 11
+
+    def __init__(self, time_boot_ms, min_distance, max_distance, current_distance, type, id, orientation, covariance, horizontal_fov=0, vertical_fov=0, quaternion=[0, 0, 0, 0], signal_quality=0):
+        MAVLink_message.__init__(self, MAVLink_distance_sensor_message.id, MAVLink_distance_sensor_message.name)
+        self._fieldnames = MAVLink_distance_sensor_message.fieldnames
+        self._instance_field = MAVLink_distance_sensor_message.instance_field
+        self._instance_offset = MAVLink_distance_sensor_message.instance_offset
+        self.time_boot_ms = time_boot_ms
+        self.min_distance = min_distance
+        self.max_distance = max_distance
+        self.current_distance = current_distance
+        self.type = type
+        self.id = id
+        self.orientation = orientation
+        self.covariance = covariance
+        self.horizontal_fov = horizontal_fov
+        self.vertical_fov = vertical_fov
+        self.quaternion = quaternion
+        self.signal_quality = signal_quality
+
+    def pack(self, mav, force_mavlink1=False):
+        return MAVLink_message.pack(self, mav, 85, ustruct.pack("<IHHHBBBBff4fB", self.time_boot_ms, self.min_distance, self.max_distance, self.current_distance, self.type, self.id, self.orientation, self.covariance, self.horizontal_fov, self.vertical_fov, self.quaternion[0], self.quaternion[1], self.quaternion[2], self.quaternion[3], self.signal_quality), force_mavlink1=force_mavlink1)
 
 
 class MAVLink_mission_item_message(MAVLink_message):
@@ -954,6 +998,7 @@ class MAVLink_protocol_version_message(MAVLink_message):
 mavlink_map = {
     MAVLINK_MSG_ID_HEARTBEAT: MAVLink_heartbeat_message,
     MAVLINK_MSG_ID_PROTOCOL_VERSION: MAVLink_protocol_version_message,
+    MAVLINK_MSG_ID_DISTANCE_SENSOR: MAVLink_distance_sensor_message
 }
 
 
@@ -1079,6 +1124,7 @@ class MAVLinkSigning(object):
         self.unsigned_count = 0
         self.reject_count = 0
 
+
 class MAVLink_command_long_message(MAVLink_message):
     """
     Send a command with up to seven parameters to the MAV. The command
@@ -1201,6 +1247,45 @@ class MAVLink(object):
         """
         return MAVLink_command_long_message(target_system, target_component, command, confirmation, param1, param2, param3, param4, param5, param6, param7)
 
+    def distance_sensor_encode(self, time_boot_ms, min_distance, max_distance, current_distance, type, id, orientation, covariance, horizontal_fov=0, vertical_fov=0, quaternion=[0, 0, 0, 0], signal_quality=0):
+        """
+        Distance sensor information for an onboard rangefinder.
+
+        time_boot_ms              : Timestamp (time since system boot). [ms] (type:uint32_t)
+        min_distance              : Minimum distance the sensor can measure [cm] (type:uint16_t)
+        max_distance              : Maximum distance the sensor can measure [cm] (type:uint16_t)
+        current_distance          : Current distance reading [cm] (type:uint16_t)
+        type                      : Type of distance sensor. (type:uint8_t, values:MAV_DISTANCE_SENSOR)
+        id                        : Onboard ID of the sensor (type:uint8_t)
+        orientation               : Direction the sensor faces. downward-facing: ROTATION_PITCH_270, upward-facing: ROTATION_PITCH_90, backward-facing: ROTATION_PITCH_180, forward-facing: ROTATION_NONE, left-facing: ROTATION_YAW_90, right-facing: ROTATION_YAW_270 (type:uint8_t, values:MAV_SENSOR_ORIENTATION)
+        covariance                : Measurement variance. Max standard deviation is 6cm. 255 if unknown. [cm^2] (type:uint8_t)
+        horizontal_fov            : Horizontal Field of View (angle) where the distance measurement is valid and the field of view is known. Otherwise this is set to 0. [rad] (type:float)
+        vertical_fov              : Vertical Field of View (angle) where the distance measurement is valid and the field of view is known. Otherwise this is set to 0. [rad] (type:float)
+        quaternion                : Quaternion of the sensor orientation in vehicle body frame (w, x, y, z order, zero-rotation is 1, 0, 0, 0). Zero-rotation is along the vehicle body x-axis. This field is required if the orientation is set to MAV_SENSOR_ROTATION_CUSTOM. Set it to 0 if invalid." (type:float)
+        signal_quality            : Signal quality of the sensor. Specific to each sensor type, representing the relation of the signal strength with the target reflectivity, distance, size or aspect, but normalised as a percentage. 0 = unknown/unset signal quality, 1 = invalid signal, 100 = perfect signal. [%] (type:uint8_t)
+
+        """
+        return MAVLink_distance_sensor_message(time_boot_ms, min_distance, max_distance, current_distance, type, id, orientation, covariance, horizontal_fov, vertical_fov, quaternion, signal_quality)
+
+    def distance_sensor_send(self, time_boot_ms, min_distance, max_distance, current_distance, type, id, orientation, covariance, horizontal_fov=0, vertical_fov=0, quaternion=[0, 0, 0, 0], signal_quality=0, force_mavlink1=False):
+        """
+        Distance sensor information for an onboard rangefinder.
+
+        time_boot_ms              : Timestamp (time since system boot). [ms] (type:uint32_t)
+        min_distance              : Minimum distance the sensor can measure [cm] (type:uint16_t)
+        max_distance              : Maximum distance the sensor can measure [cm] (type:uint16_t)
+        current_distance          : Current distance reading [cm] (type:uint16_t)
+        type                      : Type of distance sensor. (type:uint8_t, values:MAV_DISTANCE_SENSOR)
+        id                        : Onboard ID of the sensor (type:uint8_t)
+        orientation               : Direction the sensor faces. downward-facing: ROTATION_PITCH_270, upward-facing: ROTATION_PITCH_90, backward-facing: ROTATION_PITCH_180, forward-facing: ROTATION_NONE, left-facing: ROTATION_YAW_90, right-facing: ROTATION_YAW_270 (type:uint8_t, values:MAV_SENSOR_ORIENTATION)
+        covariance                : Measurement variance. Max standard deviation is 6cm. 255 if unknown. [cm^2] (type:uint8_t)
+        horizontal_fov            : Horizontal Field of View (angle) where the distance measurement is valid and the field of view is known. Otherwise this is set to 0. [rad] (type:float)
+        vertical_fov              : Vertical Field of View (angle) where the distance measurement is valid and the field of view is known. Otherwise this is set to 0. [rad] (type:float)
+        quaternion                : Quaternion of the sensor orientation in vehicle body frame (w, x, y, z order, zero-rotation is 1, 0, 0, 0). Zero-rotation is along the vehicle body x-axis. This field is required if the orientation is set to MAV_SENSOR_ROTATION_CUSTOM. Set it to 0 if invalid." (type:float)
+        signal_quality            : Signal quality of the sensor. Specific to each sensor type, representing the relation of the signal strength with the target reflectivity, distance, size or aspect, but normalised as a percentage. 0 = unknown/unset signal quality, 1 = invalid signal, 100 = perfect signal. [%] (type:uint8_t)
+
+        """
+        return self.send(self.distance_sensor_encode(time_boot_ms, min_distance, max_distance, current_distance, type, id, orientation, covariance, horizontal_fov, vertical_fov, quaternion, signal_quality), force_mavlink1=force_mavlink1)
 
 
     def set_callback(self, callback, *args, **kwargs):

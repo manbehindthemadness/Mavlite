@@ -17,9 +17,15 @@ master = mavutil.mavlink_connection("/dev/ttyACM0", baud=57600 )
 master.wait_heartbeat()
 
 # Get some information !
+min_distance = 5
+max_distance = 380
+# Sensor direcion mapping, Forward, Right, Back, Left, Up, Down
+SensorDirections=[0,2,4,6,24,25]
+
 while True:
-    try:
-        print(master.recv_match().to_dict())
-    except:
-        pass
+    # Forward
+
+    for i in range(len(SensorDirections)):
+        ExampleDistance = 3 # COLLECT YOUR SENSOR DISTANCE HERE FOR EACH SENSOR (cm) 
+        mavutil.distance_sensor_send(min_distance ,max_distance , ExampleDistance, SensorDirections[i], 0, 6)
     time.sleep(0.1)
