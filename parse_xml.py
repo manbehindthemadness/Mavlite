@@ -29,7 +29,11 @@ def load_model():
         name = enum['@name']
         entry = enum['entry']
 
-        child_models[name] = entry
+        if not isinstance(entry, dict):
+            child_models[name] = entry
+            for child_entry in child_models[name]:
+                if 'description' in child_entry.keys():
+                    del child_entry['description']
 
     pprint.pprint(child_models, indent=2)
 
