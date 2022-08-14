@@ -1420,8 +1420,21 @@ class MAVLink(object):
         if native_testing:
             self.test_buf = bytearray()
 
-    def command_long_send(self, target_system, target_component, command, confirmation, param1, param2, param3, param4,
-                          param5, param6, param7, force_mavlink1=False):
+    def command_long_send(
+            self,
+            target_system,
+            target_component,
+            command,
+            confirmation,
+            param1,
+            param2,
+            param3,
+            param4,
+            param5,
+            param6,
+            param7,
+            force_mavlink1=False
+    ):
         """
         Send a command with up to seven parameters to the MAV. The command
         microservice is documented at
