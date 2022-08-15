@@ -58,7 +58,7 @@ MAVLINK_TYPE_INT64_T = 8
 MAVLINK_TYPE_FLOAT = 9
 MAVLINK_TYPE_DOUBLE = 10
 
-conv_err = (TypeError, AttributeError)
+conv_err = (TypeError, AttributeError, ValueError)
 
 
 # swiped from DFReader.py
