@@ -175,6 +175,12 @@ class MAVLinkMessage(object):
             raw_attr = to_string(raw_attr).rstrip("\00")  # noqa
         return raw_attr
 
+    def copy(self):  # TODO: This is a workaround to suppress an AttributeError and may cause problems.
+        """
+        placeholder.
+        """
+        return None
+
     def get_msgbuf(self):
         """
         Need to populate.
@@ -1695,7 +1701,6 @@ class MAVLink(object):
             if self.buf_len() == 0 and self.buf_index != 0:
                 self.buf = bytearray()
                 self.buf_index = 0
-
         return m
 
     def __parse_char_legacy(self):
