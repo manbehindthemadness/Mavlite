@@ -14,13 +14,14 @@ import os
 import sys
 import select
 import json
+import gc
 
 try:
     mp = True
-    import machine.UART as uart  # noqa
+    from machine import UART as uart  # noqa
 except ImportError:
     mp = False
-    import busio.UART as uart  # noqa
+    from busio import UART as uart  # noqa
 
 
 class UART:
@@ -45,7 +46,8 @@ class UART:
             self.uart = uart(s_id, baudrate)
             self.uart.init(baudrate, bits, parity, stop, timeout=timeout, rxbuf=rxbuf, rx=rx, tx=tx)
         else:
-            self.uart = uart(tx, rx, baudrate, bits, parity, stop, timeout, reseive_buffer=rxbuf)
+            self.uart = uart(tx, rx, baudrate=baudrate, bits=bits,
+                             parity=parity, stop=stop, timeout=timeout, receiver_buffer_size=rxbuf)
 
     def read(self, n_bytes: int = 8) -> uart.read:
         """
@@ -234,8 +236,12 @@ def set_dialect(dialect) -> any:
     # Should eventually be "micropymavlink.dialects.v20."
     modname = "micropymavlink." + dialect
 
-    print(modname)
+    gc.enable()
+    gc.collect()
+    print('available initial memory:', gc.mem_free())  # noqa
+    print('importing', modname)  # noqa
     mod = __import__(modname)
+    print('memory remaining after import:', gc.mem_free())  # noqa
 
     components = modname.split('.')
     for comp in components[1:]:
@@ -262,8 +268,8 @@ class MavFileState(object):
         self.armed = False  # canonical arm state for the vehicle as a whole
 
         if float(mavlink.WIRE_PROTOCOL_VERSION) >= 1:
-            self.messages['HOME'] = mavlink.MAVLink_gps_raw_int_message(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-            mavlink.MAVLink_waypoint_message = mavlink.MAVLink_mission_item_message
+            self.messages['HOME'] = mavlink.MAVLinkGpsRawIntMessage(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+            mavlink.MAVLink_waypoint_message = mavlink.MAVLinkMissionItemMessage
         else:
             self.messages['HOME'] = mavlink.MAVLink_gps_raw_message(0, 0, 0, 0, 0, 0, 0, 0, 0)
 
@@ -308,7 +314,7 @@ class MavFile(object):
         self.source_component = source_component
         self.first_byte = True
         self.robust_parsing = True
-        self.mav = mavlink.MAVLink(self, srcSystem=self.source_system, srcComponent=self.source_component,
+        self.mav = mavlink.MAVLink(self, srcsystem=self.source_system, srccomponent=self.source_component,
                                    use_native=use_native)
         self.mav.robust_parsing = self.robust_parsing
         self.logfile = None
@@ -423,7 +429,7 @@ class MavFile(object):
             return
         try:
             magic = ord(buf[0])
-        except IndexError:
+        except (IndexError, TypeError):
             magic = buf[0]
         if magic not in [85, 254, 253]:
             return
@@ -486,7 +492,7 @@ class MavFile(object):
         """
         Needs population.
         """
-        if msg.get_srcComponent() == mavlink.MAV_COMP_ID_GIMBAL:
+        if msg.get_srccomponent() == mavlink.MAV_COMP_ID_GIMBAL:
             return False
         if msg.type in (mavlink.MAV_TYPE_GCS,
                         mavlink.MAV_TYPE_GIMBAL,
@@ -522,8 +528,8 @@ class MavFile(object):
             else:
                 msg._timestamp = self._timestamp
 
-        src_system = msg.get_srcSystem()
-        src_component = msg.get_srcComponent()
+        src_system = msg.get_srcsystem()
+        src_component = msg.get_srccomponent()
         src_tuple = (src_system, src_component)
 
         radio_tuple = (ord('3'), ord('D'))
@@ -609,7 +615,9 @@ class MavFile(object):
         return (100.0 * self.mav_loss) / (self.mav_count + self.mav_loss)
 
     def recv_msg(self):
-        """message receive routine"""
+        """
+        message receive routine
+        """
         self.pre_message()
         while True:
             n = self.mav.bytes_needed()
@@ -644,8 +652,10 @@ class MavFile(object):
                     return None
 
     def recv_match(self, condition=None, _type=None, blocking=False, timeout=None):
-        """recv the next MAVLink message that matches the given condition
-        type can be a string or a list of strings"""
+        """
+        recv the next MAVLink message that matches the given condition
+        type can be a string or a list of strings
+        """
         if _type is not None and not isinstance(_type, list) and not isinstance(_type, set):
             _type = [_type]
         start_time = time.time()
@@ -1146,7 +1156,11 @@ class MavSerial(MavFile):
         # is not set correctly
 
         # ATTEMPTS TO OPEN UART CONNECTION
-        uart = UART(baudrate=self.baud, tx=17, rx=16)
+        tx = 17
+        rx = 16
+        if isinstance(device, tuple):
+            tx, rx = device
+        uart = UART(baudrate=self.baud, tx=tx, rx=rx)
         self.port = uart
         # print("Attempted to establish UART connection")
         MavFile.__init__(self, None, device, source_system=source_system, source_component=source_component,

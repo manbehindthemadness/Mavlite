@@ -7,13 +7,16 @@ Note: this file has been auto-generated. DO NOT EDIT
 """
 
 import array
-import hashlib
+try:
+    import hashlib  # noqa
+except ImportError:
+    import adafruit_hashlib  # noqa
 import json
 
 try:
     import ustruct  # noqa
 except ImportError:
-    import struct
+    import struct as ustruct  # noqa
 import sys
 import time
 from builtins import (
@@ -1195,7 +1198,10 @@ class MAVError(Exception):
     """MAVLink error class"""
 
     def __init__(self, msg):
-        Exception.__init__(self, msg)
+        try:
+            Exception.__init__(self, msg)
+        except AttributeError:
+            pass
         self.message = msg
 
 
