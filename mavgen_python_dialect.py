@@ -1428,7 +1428,7 @@ class MAVLink(object):
         self.total_receive_errors = 0
         self.startup_time = time.time()
         self.signing = MAVLinkSigning()
-        self.native = None
+        self.native = False
         if native_testing:
             self.test_buf = bytearray()
 
@@ -1648,10 +1648,10 @@ class MAVLink(object):
         """
         return number of bytes needed for next parsing stage
         """
-        if self.native:
-            ret = self.native.expected_length - self.buf_len()  # TODO: Unsolved reference.
-        else:
-            ret = self.expected_length - self.buf_len()
+        # if self.native:
+        #     ret = self.native.expected_length - self.buf_len()  # TODO: Unsolved reference.
+        # else:
+        ret = self.expected_length - self.buf_len()
 
         if ret <= 0:
             return 1

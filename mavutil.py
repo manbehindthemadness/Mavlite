@@ -33,7 +33,7 @@ class UART:
     def __init__(
             self,
             s_id: int = 1,
-            baudrate: int = 9600,
+            baudrate: int = 57600,
             bits: int = 8,
             parity: [None, int] = None,
             stop: int = 1,
@@ -1148,7 +1148,7 @@ class FakeSerial:
 class MavSerial(MavFile):
     """a serial mavlink port"""
 
-    def __init__(self, device, baud=115200, autoreconnect=False, source_system=255, source_component=0,
+    def __init__(self, device, baud=57600, autoreconnect=False, source_system=255, source_component=0,
                  use_native=default_native, force_connected=False):
         if ',' in device:
             device, baud = device.split(',')
@@ -1239,7 +1239,7 @@ class MavSerial(MavFile):
 
 
 # noinspection PyUnusedLocal
-def mavlink_connection(device, baud=115200, source_system=255, source_component=0,
+def mavlink_connection(device, baud=57600, source_system=255, source_component=0,
                        planner_format=None, write=False, append=False,
                        robust_parsing=True, notimestamps=False, _input=True,
                        dialect=None, autoreconnect=False, zero_time_base=False,
