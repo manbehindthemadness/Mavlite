@@ -42,6 +42,93 @@ global_link_id = 0
 Dialect = 'mavgen_python_dialect'
 
 
+try:
+    mp = True
+    from machine import UART as uart  # noqa
+except ImportError:
+    mp = False
+    from busio import UART as uart  # noqa
+
+class UART:
+    # noinspection GrazieInspection
+    """
+        Wrapper class for machine.UART and busio.UART
+        """
+
+    def __init__(
+            self,
+            s_id: int = 1,
+            baudrate: int = 57600,
+            bits: int = 8,
+            parity: [None, int] = None,
+            stop: int = 1,
+            timeout: int = 1,
+            rxbuf: int = 64,
+            tx: any = None,
+            rx: any = None
+    ):
+        if mp:
+            self.uart = uart(s_id, baudrate)
+            self.uart.init(baudrate, bits, parity, stop, timeout=timeout, rxbuf=rxbuf, rx=rx, tx=tx)
+        else:
+            self.uart = uart(tx, rx, baudrate=baudrate, bits=bits,
+                             parity=parity, stop=stop, timeout=timeout, receiver_buffer_size=rxbuf)
+
+    def read(self, n_bytes: int = 8) -> uart.read:
+        """
+        Read wrapper.
+        """
+        return self.uart.read(n_bytes)
+
+    def readinto(self, buf: bytes) -> uart.readinto:
+        """
+        Readinto wrapper.
+        """
+        return self.readinto(buf)
+
+    def readline(self) -> uart.readline:
+        """
+        Readline wrapper.
+        """
+        return self.uart.readline()
+
+    def write(self, buf: [str, bytes]) -> uart.write:
+        """
+        Write wrapper
+        """
+        if not isinstance(buf, bytes):
+            buf = buf.encode()
+        return self.uart.write(buf)
+
+    def deinit(self) -> uart.deinit:
+        """
+        Deinit wrapper.
+        """
+        return self.uart.deinit()
+
+    def setbaudrate(self, baudrate: int):
+        """
+        Set baudrate wrapper.
+        """
+        if mp:
+            return self.uart.setbaudrate(baudrate)
+        else:
+            self.uart.baudrate = baudrate
+            return self.uart
+
+    def any(self):
+        """
+        Any wrapper.
+        """
+        if mp:
+            result = self.uart.any()
+        else:
+            result = self.uart.in_waiting
+        if result:
+            print('bytes waiting', result)
+        return result
+
+
 
 def evaluate_expression(expression, vars, nocondition=False):
     '''evaluation an expression'''
@@ -480,6 +567,7 @@ class mavfile(object):
             # we can extract
             msg = self.mav.parse_char(s)
             if msg:
+                print(msg)
                 if self.logfile and  msg.get_type() != 'BAD_DATA' :
                     usec = int(time.time() * 1.0e6) & ~3
                     if is_py3:
@@ -944,9 +1032,10 @@ class FakeSerial():
         pass
 
 class mavserial(mavfile):
-    '''a serial mavlink port'''
-    def __init__(self, device, baud=115200, autoreconnect=False, source_system=255, source_component=0, use_native=default_native, force_connected=False):
-        from machine import UART
+    """a serial mavlink port"""
+
+    def __init__(self, device, baud=57600, autoreconnect=False, source_system=255, source_component=0,
+                 use_native=default_native, force_connected=False):
         if ',' in device:
             device, baud = device.split(',')
         self.baud = baud
@@ -956,27 +1045,38 @@ class mavserial(mavfile):
         # we rather strangely set the baudrate initially to 1200, then change to the desired
         # baudrate. This works around a kernel bug on some Linux kernels where the baudrate
         # is not set correctly
-        
-        #ATTEMPTS TO OPEN UART CONNECTION
-        uart = UART(1, self.baud)                         # init with given baudrate
-        uart.init(self.baud, bits=8, parity=None, stop=1, tx=17, rx=16)
+
+        # ATTEMPTS TO OPEN UART CONNECTION
+        tx = 17
+        rx = 16
+        if isinstance(device, tuple):
+            tx, rx = device
+        uart = UART(baudrate=self.baud, tx=tx, rx=rx)
         self.port = uart
-        #print("Attempted to establish UART connection")
-        mavfile.__init__(self, None, device, source_system=source_system, source_component=source_component, use_native=use_native)
+        # print("Attempted to establish UART connection")
+        mavfile.__init__(self, None, device, source_system=source_system, source_component=source_component,
+                         use_native=use_native)
         self.rtscts = False
 
     def set_baudrate(self, baudrate):
-        '''set baudrate'''
+        """set baudrate"""
         try:
-            self.port.setBaudrate(baudrate)
-        except Exception:
+            self.port.setbaudrate(baudrate)
+        except Exception as err:  # TODO: Exception clause too broad
+            print(err)
             # for pySerial 3.0, which doesn't have setBaudrate()
             self.port.baudrate = baudrate
-    
-    def close(self):
+
+    def close(self, **kwargs):
+        """
+        Needs population.
+        """
         self.port.deinit()
 
-    def recv(self,n=None):
+    def recv(self, n=None):
+        """
+        Needs population.
+        """
         if n is None:
             n = self.mav.bytes_needed()
         if self.fd is None:
@@ -984,27 +1084,34 @@ class mavserial(mavfile):
             if waiting < n:
                 n = waiting
         ret = self.port.read(n)
+        if ret != b'':
+            print('in buff', ret)
         return ret
 
     def write(self, buf):
+        """
+        Needs population.
+        """
         try:
+            # print('out buff', buf)
             return self.port.write(bytes(buf))
-        except Exception:
+        except Exception:  # TODO: Exception clause too broad
             if not self.portdead:
                 print("Device %s is dead" % self.device)
             self.portdead = True
             if self.autoreconnect:
                 self.reset()
             return -1
-            
+
     def reset(self):
-        from machine import UART
+        """
+        Needs population.
+        """
         try:
             try:
-                uart = UART(1, self.baud)                         # init with given baudrate
-                uart.init(self.baud, bits=8, parity=None, stop=1)
+                uart = UART(baudrate=self.baud, tx=17, rx=16)
                 newport = uart
-            except:
+            except (AttributeError, RuntimeError):
                 return False
             self.port.deinit()
             self.port = newport
@@ -1013,7 +1120,7 @@ class mavserial(mavfile):
             self.fd = None
             self.set_baudrate(self.baud)
             return True
-        except Exception:
+        except Exception:  # TODO: Exception clause too broad
             return False
 
 def mavlink_connection(device, baud=115200, source_system=255, source_component=0,

@@ -7,12 +7,19 @@ Note: this file has been auto-generated. DO NOT EDIT
 """
 
 import array
-import hashlib
+try:
+    import hashlib
+except ImportError:
+    import adafruit_hashlib
 import json
-import ustruct
+try:
+    import ustruct  # noqa
+except ImportError:
+    import struct as ustruct  # noqa
 import sys
 import time
 from builtins import object, range
+
 
 WIRE_PROTOCOL_VERSION = "2.0"
 DIALECT = "mavgen_python_dialect"
@@ -1006,7 +1013,7 @@ class MAVError(Exception):
     """MAVLink error class"""
 
     def __init__(self, msg):
-        Exception.__init__(self, msg)
+        # Exception.__init__(self, msg)
         self.message = msg
 
 
