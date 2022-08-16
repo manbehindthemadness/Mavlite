@@ -637,6 +637,8 @@ class MavFile(object):
             # we can extract
             msg = self.mav.parse_char(s)
             if msg:
+                print('message', msg)
+            if msg:
                 if self.logfile and msg.get_type() != 'BAD_DATA':
                     usec = int(time.time() * 1.0e6) & ~3
                     if is_py3:
@@ -1171,7 +1173,8 @@ class MavSerial(MavFile):
         """set baudrate"""
         try:
             self.port.setbaudrate(baudrate)
-        except Exception:  # TODO: Exception clause too broad
+        except Exception as err:  # TODO: Exception clause too broad
+            print(err)
             # for pySerial 3.0, which doesn't have setBaudrate()
             self.port.baudrate = baudrate
 
@@ -1192,6 +1195,8 @@ class MavSerial(MavFile):
             if waiting < n:
                 n = waiting
         ret = self.port.read(n)
+        if ret != b'':
+            print('in buff', ret)
         return ret
 
     def write(self, buf):
@@ -1199,6 +1204,7 @@ class MavSerial(MavFile):
         Needs population.
         """
         try:
+            # print('out buff', buf)
             return self.port.write(bytes(buf))
         except Exception:  # TODO: Exception clause too broad
             if not self.portdead:
@@ -1772,7 +1778,7 @@ def decode_bitmask(messagetype, field, value):
     return ret
 
 
-def dump_message_verbose(_f, m):
+def dump_message_verbose(_f=None, m=None):
     """
     write an excruciatingly detailed dump of message m to file descriptor f
     """
@@ -1785,10 +1791,16 @@ def dump_message_verbose(_f, m):
         timestamp = "%s.%02u: " % (
             time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(timestamp)),
             int(timestamp * 100.0) % 100)
-    _f.write("%s%s (id=%u) (link=%s) (signed=%s) (seq=%u) (src=%u/%u)\n" % (
-        timestamp, m.get_type(), m.get_msgId(), str(m.get_link_id()), str(m.get_signed()), m.get_seq(),
-        m.get_srcSystem(),
-        m.get_srcComponent()))
+    if _f:
+        _f.write("%s%s (id=%u) (link=%s) (signed=%s) (seq=%u) (src=%u/%u)\n" % (
+            timestamp, m.get_type(), m.get_msgId(), str(m.get_link_id()), str(m.get_signed()), m.get_seq(),
+            m.get_srcSystem(),
+            m.get_srcComponent()))
+    else:
+        print("%s%s (id=%u) (link=%s) (signed=%s) (seq=%u) (src=%u/%u)\n" % (
+            timestamp, m.get_type(), m.get_msgId(), str(m.get_link_id()), str(m.get_signed()), m.get_seq(),
+            m.get_srcSystem(),
+            m.get_srcComponent()))
     for fieldname in m.get_fieldnames():
 
         # format in those most boring way possible:
@@ -1861,7 +1873,10 @@ def dump_message_verbose(_f, m):
             display = m.fielddisplays_by_name[fieldname]
             if enum_name is not None and display == "bitmask":
                 bits = decode_bitmask(m.get_type(), fieldname, value)
-                f.write("    %s: %s\n" % (fieldname, value))
+                if f:
+                    f.write("    %s: %s\n" % (fieldname, value))
+                else:
+                    print("    %s: %s\n" % (fieldname, value))
                 for bit in bits:
                     value = bit.value
                     name = bit.name
@@ -1870,7 +1885,10 @@ def dump_message_verbose(_f, m):
                         svalue = "!"
                     if name is None:
                         name = "[UNKNOWN]"
-                    f.write("      %s %s\n" % (svalue, name))
+                    if f:
+                        f.write("      %s %s\n" % (svalue, name))
+                    else:
+                        print("      %s %s\n" % (svalue, name))
                 continue
         #            except NameError as e:
         #                pass
