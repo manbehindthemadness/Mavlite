@@ -96,9 +96,12 @@ class UART:
         Any wrapper.
         """
         if mp:
-            return self.uart.any()
+            result = self.uart.any()
         else:
-            return self.uart.in_waiting
+            result = self.uart.in_waiting
+        if result:
+            print('bytes waiting', result)
+        return result
 
 
 is_py3 = sys.version_info >= (3, 0)
