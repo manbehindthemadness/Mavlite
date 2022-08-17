@@ -41,6 +41,7 @@ class X25crc:
                 await self.accumulate_str(buf)
             else:
                 await self.accumulate(buf)
+        return self
 
     async def accumulate(self, buf):
         """
@@ -80,9 +81,10 @@ class Packet:
     compat = 0x00  # 0-255 Compatibility Flags: https://mavlink.io/en/guide/serialization.html#compat_flags
     psn = 0x00  # 0-255 Packet sequence number.
     sid = 0x01  # 1-255 System ID (sender).
-    cid = 0x01  # 1-255 Component ID (sender)
+    cid = 0x01  # 1-255 Component ID (sender): https://mavlink.io/en/messages/common.html#MAV_COMPONENT
     mid = 0x00  # 0-16777215 Message ID (low, middle, high bytes)
     payload: bytes = bytes()  # Payload Max 255 bytes: https://mavlink.io/en/guide/serialization.html#payload
+    next_payload: bytes = bytes()  # A place to store payload information that is larger than the allowed size.
     crc = 0xffff  # Checksum (low byte, high byte): https://mavlink.io/en/guide/serialization.html#checksum
     sig = 0x00  # Optional signature: https://mavlink.io/en/guide/message_signing.html
 
@@ -110,6 +112,27 @@ class Packet:
         self.crc_extra = 0x00
         self.x25 = X25crc()
 
+        return self
+
+    async def message_checksum(self, msg):
+        """
+        TODO: If this code doesn't prove better than our original solution, remove it.
+
+        This is example code: https://mavlink.io/en/guide/serialization.html#payload
+
+        calculate an 8-bit checksum of the key fields of a message, so we
+        can detect incompatible XML changes.
+        """
+        crc = self.x25
+        await crc.accumulate_str(msg.name + ' ')
+        crc_end = msg.base_fields()
+        for i in range(crc_end):
+            f = msg.ordered_fields[i]
+            await crc.accumulate_str(f.type + ' ')
+            await crc.accumulate_str(f.name + ' ')
+            if f.array_length:
+                await crc.accumulate([f.array_length])
+        self.crc_extra = (crc.crc & 0xFF) ^ (crc.crc >> 8)
         return self
 
     async def header(self) -> bytes:
@@ -142,7 +165,7 @@ class Packet:
         self.payload = self.payload[:self.p_len]
         return self
 
-    async def assemble(self):
+    async def assemble(self) -> bytes:
         """
         Assembles a packet for transmission.
         """
@@ -154,5 +177,3 @@ class Packet:
         self.crc = self.x25.crc
         self.packet += struct.pack("<H", self.crc)
         return self.packet
-
-
