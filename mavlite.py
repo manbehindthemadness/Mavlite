@@ -1,5 +1,13 @@
 """
 This file is an attempt to produce a bare-minimum Mavlink communication system.
+
+
+ # decode the payload
+type = mavlink_map[mapkey]
+fmt = type.format
+order_map = type.orders
+len_map = type.lengths
+crc_extra = type.crc_extra
 """
 import array
 import struct
