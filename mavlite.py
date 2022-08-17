@@ -5,6 +5,22 @@ import array
 import struct
 
 
+MAVLINK_MSG_ID_GPS_RAW_INT = 24
+MAVLINK_MSG_ID_COMMAND_LONG = 76
+MAVLINK_MSG_ID_BAD_DATA = -1
+MAVLINK_MSG_ID_UNKNOWN = -2
+MAVLINK_MSG_ID_HEARTBEAT = 0
+MAVLINK_MSG_ID_PROTOCOL_VERSION = 300
+MAVLINK_MSG_ID_MISSION_ITEM = 39
+MAVLINK_MSG_ID_MISSION_REQUEST = 40
+MAVLINK_MSG_ID_MISSION_SET_CURRENT = 41
+MAVLINK_MSG_ID_MISSION_CURRENT = 42
+MAVLINK_MSG_ID_MISSION_REQUEST_LIST = 43
+MAVLINK_MSG_ID_MISSION_COUNT = 44
+MAVLINK_MSG_ID_MISSION_CLEAR_ALL = 45
+MAVLINK_MSG_ID_MISSION_ITEM_REACHED = 46
+
+
 async def to_string(string: bytes) -> str:
     """
     Get whatever we can from the incoming bytes object.
@@ -165,7 +181,7 @@ class Packet:
         self.payload = self.payload[:self.p_len]
         return self
 
-    async def assemble(self) -> bytes:
+    async def assemble(self):
         """
         Assembles a packet for transmission.
         """
@@ -176,4 +192,68 @@ class Packet:
         await self.x25.accumulate_str(struct.pack("B", self.crc_extra))  # noqa
         self.crc = self.x25.crc
         self.packet += struct.pack("<H", self.crc)
+        return self
+
+    async def create(self, crc_extra, *args) -> bytes:
+        """
+        Creates a finished mavlink packet that is ready for transmission.
+
+        TODO: So far we have no way of keeping the max packet size maintained... Investigate.
+        """
+        self.crc_extra = crc_extra
+        self.payload = struct.pack(*args)
+        await self.assemble()
         return self.packet
+
+
+class Heartbeat:
+    """
+    The heartbeat message shows that a system or component is present
+    and responding. The type and autopilot fields (along with the
+    message component id), allow the receiving system to treat further
+    messages from this system appropriately (e.g. by laying out the
+    user interface based on the autopilot). This microservice is
+    documented at https://mavlink.io/en/services/heartbeat.html
+    """
+
+    packet = Packet()
+
+    m_id = MAVLINK_MSG_ID_HEARTBEAT
+    name = "HEARTBEAT"
+    fieldnames = ["type", "autopilot", "base_mode", "custom_mode", "system_status", "mavlink_version"]
+    ordered_fieldnames = ["custom_mode", "type", "autopilot", "base_mode", "system_status", "mavlink_version"]
+    field_types = ["uint8_t", "uint8_t", "uint8_t", "uint32_t", "uint8_t", "uint8_t"]
+    field_displays_by_name = {"base_mode": "bitmask"}
+    field_enums_by_name = {"type": "MAV_TYPE", "autopilot": "MAV_AUTOPILOT", "base_mode": "MAV_MODE_FLAG", "system_status": "MAV_STATE"}
+    field_units_by_name = {}
+    format = "<IBBBBB"
+    native_format = bytearray("<IBBBBB", "ascii")
+    orders = [1, 2, 3, 0, 4, 5]
+    lengths = [1, 1, 1, 1, 1, 1]
+    array_lengths = [0, 0, 0, 0, 0, 0]
+    crc_extra = 50
+
+    instance_field = None
+    instance_offset = -1
+
+    def __init__(self, *args, **kwargs):
+        self.type, self.autopilot, self.base_mode, self.custom_mode, self.system_status, self.mavlink_version = args
+        self._fieldnames = kwargs.pop('fieldnames')
+        self._instance_field = kwargs.pop('instance_field')
+        self._instance_offset = kwargs.pop('instance_offset')
+
+    async def create(self):
+        """
+        Assemble heartbeat packet.
+        """
+        result = self.packet.create(
+            50,
+            "<IBBBBB",
+            self.custom_mode,
+            self.type,
+            self.autopilot,
+            self.base_mode,
+            self.system_status,
+            self.mavlink_version
+        )
+        return result
