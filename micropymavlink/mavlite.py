@@ -233,7 +233,6 @@ async def decode_payload(message_id: int, payload: list, debug: bool = False):
     Uses the indexed format to decode the contents of an incoming payload.
     """
     _format = "<" + formats[message_id]
-    # TODO: This only works for pasting in the bytearray values so it should be moved to the payload decoding logic.
     p_len = struct.calcsize(_format)
     if p_len > len(payload):
         diff = p_len - len(payload)
