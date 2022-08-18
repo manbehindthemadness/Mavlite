@@ -4,7 +4,6 @@ This file is an attempt to produce a bare-minimum Mavlink UART communication sys
 """
 import array
 import struct
-import asyncio
 import board  # noqa
 from MSGFormats import formats
 from uart import (
@@ -12,7 +11,6 @@ from uart import (
     uart_io,
     read_buffer,
     write_buffer,
-    uart_read
 )
 
 
@@ -223,13 +221,6 @@ class Heartbeat:
                     del read_buffer[idx]
                     break
         return True
-
-    async def create(self):
-        """
-        Assemble heartbeat packet.
-        """
-        result = None
-        return result
 
 
 async def decode_payload(message_id: int, payload: list, debug: bool = False):
