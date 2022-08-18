@@ -195,6 +195,13 @@ class Packet:
             await self.reset()
         return self
 
+    @staticmethod
+    async def receive():
+        """
+        Just returns the read buffer.
+        """
+        return read_buffer
+
 
 class Heartbeat:
     """
@@ -284,6 +291,13 @@ class MavLink:
         """
         await self.packet.send()
         return self
+
+    async def receive(self):
+        """
+        Read from the incoming buffer
+        """
+        result = await self.packet.receive()
+        return result
 
 
 async def test(_uart):
