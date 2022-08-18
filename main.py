@@ -14,7 +14,7 @@ try:
     import board  # noqa
     _uart = UART(tx=board.TX, rx=board.RX, baudrate=115200)
 except ImportError:
-    _uart = UART(1, baudrate=115200)
+    _uart = UART(tx=17, rx=16, baudrate=115200)
 
 
 asyncio.run(test(_uart))

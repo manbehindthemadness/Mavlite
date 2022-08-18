@@ -1,7 +1,6 @@
 """# Write your code here :-)"""
-import board  # noqa
-import asyncio
 import struct
+
 
 class UART:
     # noinspection GrazieInspection
@@ -181,6 +180,9 @@ def test():
     """
     Run a test loop
     """
+    import board  # noqa
+    import asyncio
+
     async def loop():
         """
         A while clause...
