@@ -4,10 +4,8 @@ This file is an attempt to produce a bare-minimum Mavlink UART communication sys
 """
 import array
 import struct
-import board  # noqa
 from MSGFormats import formats
 from uart import (
-    UART,
     uart_io,
     read_buffer,
     write_buffer,
@@ -288,7 +286,7 @@ class MavLink:
         return self
 
 
-async def test():
+async def test(_uart):
     """
     Test
     """
@@ -316,5 +314,4 @@ async def test():
     })
     print(msg)
     await m.send()
-    _uart = UART(tx=board.TX, rx=board.RX, baudrate=115200)
     await uart_io(_uart, True)
