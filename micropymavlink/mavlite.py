@@ -327,7 +327,3 @@ async def test():
     await m.send()
     _uart = UART(tx=board.TX, rx=board.RX, baudrate=115200)
     await uart_io(_uart, True)
-
-
-# asyncio.run(test())
-
