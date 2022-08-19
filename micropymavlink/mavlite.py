@@ -401,11 +401,11 @@ async def test(_uart):
         command_id=m_id,
         target_system=1,
         target_component=1,
-        params=[2, 2, 2, 0, 0, 0, 0],
+        params=[1, 0, 0, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
-        s_id=2,
-        c_id=2
+        s_id=0,
+        c_id=0
     )
     await uart_io(_uart, True)
     # print('write_buffer', write_buffer)
