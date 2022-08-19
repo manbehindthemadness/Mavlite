@@ -12,11 +12,14 @@ from micropymavlink.uart import (
 )
 
 
-async def decode_payload(message_id: int, payload: list, debug: bool = False):
+async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
     """
     Uses the indexed format to decode the contents of an incoming payload.
     """
-    _format = "<" + formats[message_id]
+    if not format_override:
+        _format = "<" + formats[message_id]
+    else:
+        _format = "<" + format_override
     p_len = struct.calcsize(_format)
     if p_len > len(payload):
         diff = p_len - len(payload)
@@ -251,57 +254,74 @@ class Command:
     """
     This will allow us to send commands and read the ACK.
     """
-    cmd_id = 0
-    s_id = 0
-    c_id = 0
 
-    def __init__(self):  # TODO: We will need to pass our name and IDs during init for addressing.
-        self.dummy = None
+    def __init__(self, s_id: int, c_id: int):
+        self.s_id = s_id
+        self.c_id = c_id
 
-    async def wait(self) -> bool:
+    async def wait(self, cmd_id: int, debug: bool = False) -> bool:
         """
         This will wait for our command ACK response.
 
         TODO: We need a timeout here to prevent blocking.
+
+        TODO: I am not 100% sure how the addressing works here; however, it is my assumption that the
+                component and system IDs sent in the header identify the packet sender,
+                and the target component and system IDs in the payload represent the desired recipient.
         """
         ack = False
         while not ack:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
-                    c_id = message['component_id']
-                    s_id = message['system_id']
-                    if [c_id, s_id] == [self.c_id, self.s_id]:
+                    if debug:
+                        print('found ACK')
+                    contents = decode_payload(77, message['payload'])
+                    command_id, result, progress, result_param2, target_system, target_component = contents
+                    if [target_component, target_system, command_id] == [self.c_id, self.s_id, cmd_id]:
                         ack = True
                         del read_buffer[idx]
+                        if debug:
+                            print('ACK accepted')
                         break
+                    else:
+                        if debug:
+                            print('ACK rejected')
+                            print(
+                                'expected values: cmd_id', cmd_id, 'system_id', self.s_id,
+                                'component_id', self.c_id
+                            )
+                            print(
+                                'values received: cmd_id', command_id, 'system_id', target_system,
+                                'component_id', target_component
+                            )
         return ack
 
     async def send(
             self,
             command_id: int = 0,
-            s_id: int = 0,
-            c_id: int = 0,
             params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0)
     ) -> bool:
         """
         Send a command and wait for the ACK.
         """
         # TODO: Send command here.
-        return await self.wait()
+        return await self.wait(command_id)
 
 
 class MavLink:
     """
     This is where it all comes together babah.
     """
-    def __init__(self, message_ids: list):  # TODO: We will need to pass our name and IDs during init for addressing.
+    def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff):
+        self.system_id = s_id
+        self.commponent_id = c_id
         for f in formats:
             if f not in message_ids:
                 del formats[f]
         self.message_ids = message_ids
         self.heartbeat = Heartbeat()
         self.packet = Packet()
-        self.command = Command()
+        self.command = Command(s_id, c_id)
 
     async def heartbeat_wait(self):
         """
