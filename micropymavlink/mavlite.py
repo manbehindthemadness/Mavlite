@@ -4,8 +4,8 @@ This file is an attempt to produce a bare-minimum Mavlink UART communication sys
 """
 import array
 import struct
-from MSGFormats import formats
-from uart import (
+from micropymavlink.MSGFormats import formats
+from micropymavlink.uart import (
     uart_io,
     read_buffer,
     write_buffer,
@@ -303,11 +303,11 @@ async def test(_uart):
     """
     Test
     """
-    m_id = 111
+    m_id = 246
     m = MavLink([m_id])
     pk = await m.create_message(
-        m_id=111,
-        payload=[0, 10000],
+        m_id=m_id,
+        payload=[1, 1, 1, 0, 0, 0, -1],
         c_flags=0,
         i_flags=0,
         s_id=1,
