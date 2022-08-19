@@ -12,6 +12,23 @@ from micropymavlink.uart import (
 )
 
 
+async def decode_payload(message_id: int, payload: list, debug: bool = False):
+    """
+    Uses the indexed format to decode the contents of an incoming payload.
+    """
+    _format = "<" + formats[message_id]
+    p_len = struct.calcsize(_format)
+    if p_len > len(payload):
+        diff = p_len - len(payload)
+        suffix = [0] * diff
+        payload.extend(suffix)
+    if debug:
+        print('using format:', _format)
+        print('payload length:', len(payload), 'payload', *payload)
+    payload = struct.unpack(_format, bytes(payload))
+    return payload
+
+
 class X25crc:
     """
     Improved CRC code.
@@ -155,7 +172,7 @@ class Packet:
         """
         _format = formats[message_id]
         if len(payload) != len(_format):
-            print('payload malformed, expected arguments:', len(_format), 'arguments received:', len(payload))
+            print('payload malformed: expected', len(_format), 'arguments, received:', len(payload))
             raise ValueError
         _format = "<" + formats[message_id]
         self.payload = struct.pack(_format, *payload)
@@ -217,6 +234,8 @@ class Heartbeat:
     async def wait() -> True:
         """
         Waits for a heartbeat.
+
+        TODO: I think we will need to get the system IDs of the flight controller from here.
         """
         beat = False
         while not beat:
@@ -225,37 +244,64 @@ class Heartbeat:
                     beat = True
                     del read_buffer[idx]
                     break
-        return True
+        return beat
 
 
-async def decode_payload(message_id: int, payload: list, debug: bool = False):
+class Command:
     """
-    Uses the indexed format to decode the contents of an incoming payload.
+    This will allow us to send commands and read the ACK.
     """
-    _format = "<" + formats[message_id]
-    p_len = struct.calcsize(_format)
-    if p_len > len(payload):
-        diff = p_len - len(payload)
-        suffix = [0] * diff
-        payload.extend(suffix)
-    if debug:
-        print('using format:', _format)
-        print('payload length:', len(payload), 'payload', *payload)
-    payload = struct.unpack(_format, bytes(payload))
-    return payload
+    cmd_id = 0
+    s_id = 0
+    c_id = 0
+
+    def __init__(self):  # TODO: We will need to pass our name and IDs during init for addressing.
+        self.dummy = None
+
+    async def wait(self) -> bool:
+        """
+        This will wait for our command ACK response.
+
+        TODO: We need a timeout here to prevent blocking.
+        """
+        ack = False
+        while not ack:
+            for idx, message in enumerate(read_buffer):
+                if message['message_id'] == 77:
+                    c_id = message['component_id']
+                    s_id = message['system_id']
+                    if [c_id, s_id] == [self.c_id, self.s_id]:
+                        ack = True
+                        del read_buffer[idx]
+                        break
+        return ack
+
+    async def send(
+            self,
+            command_id: int = 0,
+            s_id: int = 0,
+            c_id: int = 0,
+            params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0)
+    ) -> bool:
+        """
+        Send a command and wait for the ACK.
+        """
+        # TODO: Send command here.
+        return await self.wait()
 
 
 class MavLink:
     """
     This is where it all comes together babah.
     """
-    def __init__(self, message_ids: list):
+    def __init__(self, message_ids: list):  # TODO: We will need to pass our name and IDs during init for addressing.
         for f in formats:
             if f not in message_ids:
                 del formats[f]
         self.message_ids = message_ids
         self.heartbeat = Heartbeat()
         self.packet = Packet()
+        self.command = Command()
 
     async def heartbeat_wait(self):
         """
