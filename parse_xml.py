@@ -27,7 +27,3 @@ def load_messages() -> (list, list):
         if enum['@name'] == 'MAV_CMD':
             commands = enum['entry']
     return messages, commands
-
-
-
-
