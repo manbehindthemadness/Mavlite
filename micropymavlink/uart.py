@@ -139,7 +139,8 @@ async def uart_read(_uart: any = None, debug: bool = False) -> list:
                             'message_id': struct.unpack("H", bytes(p[7:9]))[0],
                             'system_id': p[5],
                             'component_id': p[6],
-                            'payload': p[10:pay_end]
+                            'payload': p[10:pay_end],
+                            'crc': p[pay_end:pay_end + 2]
                         })
                         read_buffer = read_buffer[-buffer_size:]
                     except IndexError:

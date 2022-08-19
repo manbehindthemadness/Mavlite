@@ -304,6 +304,8 @@ class MavLink:
     def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff):
         self.system_id = s_id
         self.component_id = c_id
+
+        message_ids.extend([76, 77, 0])
         for f in formats:
             if f not in message_ids:
                 del formats[f]
@@ -369,7 +371,7 @@ class MavLink:
 
     async def receive(self):
         """
-        Read from the incoming buffer
+        Read from the incoming buffer... We need to break this out into receive_message and receive_command.
         """
         return await self.packet.receive()
 
@@ -391,25 +393,23 @@ async def test(_uart):
     """
     m_id = 246
     m = MavLink([m_id])
-    pk = await m.send_message(
-        m_id=m_id,
-        payload=[1, 1, 1, 0, 0, 0, -1],
+    pk = await m.send_command(
+        command_id=m_id,
+        target_system=1,
+        target_component=1,
+        params=[1, 1, 1, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
-        s_id=1,
-        c_id=1
+        s_id=2,
+        c_id=2
     )
     p = list(pk.packet)
     pay_end = 10 + p[1]
-    pl = await decode_payload(m_id, p[10:pay_end], debug=True)
-    msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
-    msg += f'comp_id {p[6]}, mes_id {struct.unpack("H", bytes(p[7:9]))[0]}, '
-    msg += f'payload {pl}, chk {p[pay_end:pay_end + 2]}'
     read_buffer.append({
         'message_id': struct.unpack("H", bytes(p[7:9]))[0],
         'system_id': p[5],
         'component_id': p[6],
         'payload': p[10:pay_end]
     })
-    print(msg)
     await uart_io(_uart, True)
+    print('read_buffer', read_buffer)
