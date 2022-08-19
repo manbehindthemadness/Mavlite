@@ -131,7 +131,7 @@ class Packet:
         Constructs a mavlink 2 header.
         """
         self.header = struct.pack(
-            "<BBBBBBBHB",
+            "<BBBBBBBHB",  # noqa
             self.magic,
             self.p_len,
             self.incompat,
@@ -304,7 +304,8 @@ class Command:
         """
         Send a command and wait for the ACK.
         """
-        # TODO: Send command here.
+        format_override = "BBHBfffffff"  # Command_long
+        # TODO: Convert command_id to a negative number and send here.
         return await self.wait(command_id)
 
 
@@ -314,7 +315,7 @@ class MavLink:
     """
     def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff):
         self.system_id = s_id
-        self.commponent_id = c_id
+        self.component_id = c_id
         for f in formats:
             if f not in message_ids:
                 del formats[f]
@@ -350,19 +351,26 @@ class MavLink:
             c_id
         )
 
-    async def send(self):
+    async def send_message(self):
         """
         Transmits our data.
         """
-        await self.packet.send()
-        return self
+        return await self.packet.send()
+
+    async def send_command(
+            self, command_id: int = 0,
+            params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0)
+    ):
+        """
+        Send a command with a 7 byte payload and wait for ACK.
+        """
+        return await self.command.send(command_id, params)
 
     async def receive(self):
         """
         Read from the incoming buffer
         """
-        result = await self.packet.receive()
-        return result
+        return await self.packet.receive()
 
 
 async def test(_uart):
@@ -377,9 +385,8 @@ async def test(_uart):
             else:
                 param1 = 1
             self.mav.command_long_send(self.target_system, self.target_component,
-                                       mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
-                                       param1, 0, 0, 0, 0, 0, 0)
-
+               mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
+               param1, 0, 0, 0, 0, 0, 0)
     """
     m_id = 246
     m = MavLink([m_id])
@@ -404,5 +411,5 @@ async def test(_uart):
         'payload': p[10:pay_end]
     })
     print(msg)
-    await m.send()
+    await m.send_message()
     await uart_io(_uart, True)
