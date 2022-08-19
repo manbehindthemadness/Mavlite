@@ -318,7 +318,7 @@ class MavLink:
         """
         return self.heartbeat.wait()
 
-    async def create_message(
+    async def send_message(
             self,
             m_id: int,
             payload: [list, tuple],
@@ -326,11 +326,11 @@ class MavLink:
             i_flags: int = 0x00,
             s_id: int = 0x01,
             c_id: int = 0x01,
-    ) -> bytes:
+    ) -> Packet:
         """
         Formats an outgoing message into a Mavlink packet.
         """
-        return await self.packet.create_packet(
+        await self.packet.create_packet(
             m_id,
             payload,
             c_flags,
@@ -338,11 +338,6 @@ class MavLink:
             s_id,
             c_id
         )
-
-    async def send_message(self):
-        """
-        Transmits our data.
-        """
         return await self.packet.send()
 
     async def send_command(
@@ -355,7 +350,7 @@ class MavLink:
             i_flags: int = 0x00,
             s_id: int = 0x01,
             c_id: int = 0x01,
-    ):
+    ) -> Packet:
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
@@ -396,7 +391,7 @@ async def test(_uart):
     """
     m_id = 246
     m = MavLink([m_id])
-    pk = await m.create_message(
+    pk = await m.send_message(
         m_id=m_id,
         payload=[1, 1, 1, 0, 0, 0, -1],
         c_flags=0,
@@ -404,7 +399,7 @@ async def test(_uart):
         s_id=1,
         c_id=1
     )
-    p = list(pk)
+    p = list(pk.packet)
     pay_end = 10 + p[1]
     pl = await decode_payload(m_id, p[10:pay_end], debug=True)
     msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
@@ -417,5 +412,4 @@ async def test(_uart):
         'payload': p[10:pay_end]
     })
     print(msg)
-    await m.send_message()
     await uart_io(_uart, True)
