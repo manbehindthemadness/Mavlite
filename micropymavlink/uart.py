@@ -27,8 +27,8 @@ class UART:
             rx: any = None
     ):
         if self.mp:
-            self.uart = self.uart(baudrate=baudrate, rx=rx, tx=tx)
-            self.uart.init(baudrate, bits=bits, parity=parity, stop=stop, timeout=timeout, rxbuf=rxbuf)
+            self.uart = self.uart(1, baudrate)
+            self.uart.init(baudrate, bits=bits, parity=parity, stop=stop, timeout=timeout, tx=tx, rx=rx)
         else:
             self.uart = self.uart(
                 tx, rx,
