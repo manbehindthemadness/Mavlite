@@ -87,7 +87,7 @@ class Packet:
     p_len = 0x00  # 0-255  Payload length.
     incompat = 0x00  # 0-255 Incompatibility Flags: https://mavlink.io/en/guide/serialization.html#incompat_flags
     compat = 0x00  # 0-255 Compatibility Flags: https://mavlink.io/en/guide/serialization.html#compat_flags
-    psn = 0x00  # 0-255 Packet sequence number.
+    psn = 0  # 0-255 Packet sequence number.
     sid = 0x01  # 1-255 System ID (sender).
     cid = 0x01  # 1-255 Component ID (sender): https://mavlink.io/en/messages/common.html#MAV_COMPONENT
     mid = 0x00  # 0-16777215 Message ID (low, middle, high bytes)
@@ -108,11 +108,11 @@ class Packet:
     async def reset(self):
         """
         Clear all variables to save memory.
+        Also increment the PSN.
         """
         self.p_len = 0x00
         self.incompat = 0x00
         self.compat = 0x00
-        self.psn = 0x00
         self.sid = 0x01
         self.cid = 0x01
         self.mid = 0x00
@@ -123,7 +123,6 @@ class Packet:
         self.x25 = X25crc()
         self.header = bytes()
         self.payload = bytes()
-
         return self
 
     async def create_header(self):
@@ -241,12 +240,14 @@ class Heartbeat:
         TODO: I think we will need to get the system IDs of the flight controller from here.
         """
         beat = False
+        hold = False
         while not beat:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 0:
-                    beat = True
+                    hold = message['increment']
                     del read_buffer[idx]
-                    break
+            if hold:
+                beat = hold
         return beat
 
 
@@ -318,7 +319,7 @@ class MavLink:
         """
         Wait for heartbeat packet.
         """
-        return self.heartbeat.wait()
+        return await self.heartbeat.wait()
 
     async def send_message(
             self,
@@ -397,6 +398,8 @@ async def test(_uart):
     # )
     m_id = 246
     m = MavLink([m_id])
+    await uart_io(_uart, True)
+    await m.heartbeat_wait()
     await m.send_command(
         command_id=m_id,
         target_system=1,

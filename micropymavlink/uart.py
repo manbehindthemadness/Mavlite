@@ -140,6 +140,7 @@ async def uart_read(_uart: any = None, debug: bool = False) -> list:
                             'system_id': p[5],
                             'component_id': p[6],
                             'payload': p[10:pay_end],
+                            'increment': p[4],
                             'crc': p[pay_end:pay_end + 2]
                         })
                         read_buffer = read_buffer[-buffer_size:]
