@@ -391,24 +391,24 @@ async def test(_uart):
                mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
                param1, 0, 0, 0, 0, 0, 0)
     """
-    from micropymavlink.uart import (
-        stream,
-        packets
-    )
+    # from micropymavlink.uart import (
+    #     stream,
+    #     packets
+    # )
     m_id = 246
     m = MavLink([m_id])
     await m.send_command(
         command_id=m_id,
         target_system=1,
         target_component=1,
-        params=[1, 1, 1, 0, 0, 0, 0],
+        params=[2, 2, 2, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
         s_id=2,
         c_id=2
     )
     await uart_io(_uart, True)
-    print('write_buffer', write_buffer)
-    print('read_buffer', read_buffer)
-    print('stream', stream)
-    print('packets', packets)
+    # print('write_buffer', write_buffer)
+    # print('read_buffer', read_buffer)
+    # print('stream', stream)
+    # print('packets', packets)
