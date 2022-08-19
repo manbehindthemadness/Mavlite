@@ -296,18 +296,6 @@ class Command:
                             )
         return ack
 
-    async def send(
-            self,
-            command_id: int = 0,
-            params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0)
-    ) -> bool:
-        """
-        Send a command and wait for the ACK.
-        """
-        format_override = "BBHBfffffff"  # Command_long
-        # TODO: Convert command_id to a negative number and send here.
-        return await self.wait(command_id)
-
 
 class MavLink:
     """
@@ -358,13 +346,31 @@ class MavLink:
         return await self.packet.send()
 
     async def send_command(
-            self, command_id: int = 0,
-            params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0)
+            self,
+            command_id: int,
+            target_system: int = 0x01,
+            target_component: int = 0x01,
+            params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0),
+            c_flags: int = 0x00,
+            i_flags: int = 0x00,
+            s_id: int = 0x01,
+            c_id: int = 0x01,
     ):
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
-        return await self.command.send(command_id, params)
+        confirmation = 1  # TODO: This needs to increment for retry operations (see note in the ACK wait method).
+        payload = [target_system, target_component, command_id, confirmation]
+        payload.extend(list(params))
+        self.command = await self.packet.create_packet(
+            76,
+            payload,
+            c_flags=c_flags,
+            i_flags=i_flags,
+            s_id=s_id,
+            c_id=c_id
+        )
+        return await self.packet.send()
 
     async def receive(self):
         """
