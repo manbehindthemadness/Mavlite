@@ -157,7 +157,7 @@ async def uart_write(_uart: any, debug: bool = False):
     """
     global write_buffer
     if len(write_buffer):
-        for packet in write_buffer:
+        for idx, packet in enumerate(write_buffer):
             if debug:
                 p = list(packet)
                 pay_end = 10 + p[1]
@@ -165,8 +165,12 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg += f'comp_id {p[6]}, mes_id {struct.unpack("H", bytes(p[7:9]))[0]}, '
                 msg += f'payload {p[10:pay_end]}, chk {p[pay_end:pay_end + 2]}'
                 print('--------------------\n', 'sending', msg)
-            _uart.write(bytes(packet))
-        write_buffer = list()
+            a = _uart.write(bytes(packet))
+            del write_buffer[idx]
+    else:
+        if debug:
+            print('write buffer empty')
+    return write_buffer
 
 
 async def uart_io(_uart: any, debug: bool = False):
