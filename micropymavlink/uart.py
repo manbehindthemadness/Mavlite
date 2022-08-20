@@ -47,7 +47,15 @@ class UART:
         """
         Read wrapper.
         """
-        return self.uart.read(n_bytes)
+        if self.mp:
+            result = None
+            Timeout = 3000
+            while result is None and Timeout:
+                result = self.uart.read(64)
+                Timeout += 1
+            return result
+        else:
+            return self.uart.read(n_bytes)
 
     def readinto(self, buf: bytes) -> uart.readinto:
         """
@@ -116,9 +124,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
     global packets
     global read_buffer
     partial_buff = list()
-    raw = None
-    while not raw:
-        raw = _uart.read(64)
+    raw = _uart.read(64)
     if raw:
         data = list(raw)  # read up to 64 bytes
         skip = 0
