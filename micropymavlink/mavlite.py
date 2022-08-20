@@ -1,6 +1,6 @@
 """
 This file is an attempt to produce a bare-minimum Mavlink UART communication system.
-
+https://docs.python.org/3/library/struct.html
 """
 import array
 import struct
@@ -266,8 +266,6 @@ class Heartbeat:
     async def wait() -> True:
         """
         Waits for a heartbeat.
-
-        TODO: I think we will need to get the system IDs of the flight controller from here.
         """
         beat = False
         hold = False
@@ -428,8 +426,8 @@ async def test(_uart):
     await m.heartbeat_wait()
     await m.send_command(
         command_id=m_id,
-        target_system=1,
-        target_component=1,
+        target_system=0,
+        target_component=0,
         params=[1, 0, 0, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
