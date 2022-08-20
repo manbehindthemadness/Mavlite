@@ -17,7 +17,7 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
     Uses the indexed format to decode the contents of an incoming payload.
     """
     if not format_override:
-        _format = "<" + formats[message_id]
+        _format = "<" + formats[message_id][0]
     else:
         _format = "<" + format_override
     p_len = struct.calcsize(_format)
@@ -88,6 +88,8 @@ async def crc_check(pack: dict, debug: bool = False) -> bool:
     chk = pack['chk']
     crc = pack['crc']
     await x25.create(chk)
+    crc_extra = formats[pack['message_id']][1]
+    await x25.accumulate_str(struct.pack("B", crc_extra))  # noqa
     _crc = x25.crc
     if debug:
         print(crc, _crc)
@@ -95,6 +97,8 @@ async def crc_check(pack: dict, debug: bool = False) -> bool:
         result = True
     if debug and not result:
         print('CRC check failed')
+    elif debug:
+        print('CRC check passed')
     return result
 
 
@@ -188,6 +192,7 @@ class Packet:
         await self.create_header()
         self.packet = self.header + self.payload
         await self.x25.create(self.packet[1:])
+        self.crc_extra = formats[self.mid][1]
         await self.x25.accumulate_str(struct.pack("B", self.crc_extra))  # noqa
         self.crc = self.x25.crc
         self.packet += struct.pack("<H", self.crc)
@@ -197,11 +202,11 @@ class Packet:
         """
         Pack the user payload according to the specified format.
         """
-        _format = formats[message_id]
+        _format = formats[message_id][0]
         if len(payload) != len(_format):
             print('payload malformed: expected', len(_format), 'arguments, received:', len(payload))
             raise ValueError
-        _format = "<" + formats[message_id]
+        _format = "<" + formats[message_id][0]
         self.payload = struct.pack(_format, *payload)
         await self.truncate()
         self.p_len = len(list(self.payload))
@@ -331,7 +336,7 @@ class MavLink:
         self.system_id = s_id
         self.component_id = c_id
 
-        message_ids.extend([76, 77, 0])
+        message_ids.extend([76, 77, 0, 111])
         for f in formats:
             if f not in message_ids:
                 del formats[f]

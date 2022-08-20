@@ -131,18 +131,29 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
             if len(packets):
                 for p in packets:
                     try:
+                        if debug:
+                            print('--------------------')
+                        try:
+                            message_id = struct.unpack("H", bytes(p[7:9]))[0]
+                        except RuntimeError as err:
+                            print(err, '\n', p[7:9])
+                            raise RuntimeError
                         pay_end = 10 + p[1]
+                        payload = p[10:pay_end]
+                        crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
+                        chk = p[1:pay_end]
+
                         msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
-                        msg += f'comp_id {p[6]}, mes_id {struct.unpack("H", bytes(p[7:9]))[0]}, '
-                        msg += f'payload {p[10:pay_end]}, crc {struct.unpack("H", bytes(p[pay_end:pay_end + 2]))}'
+                        msg += f'comp_id {p[6]}, mes_id {message_id}, '
+                        msg += f'payload {payload}, crc {crc}'
                         pack = {
-                            'message_id': struct.unpack("H", bytes(p[7:9]))[0],
+                            'message_id': message_id,
                             'system_id': p[5],
                             'component_id': p[6],
-                            'payload': p[10:pay_end],
+                            'payload': payload,
                             'increment': p[4],
-                            'crc': struct.unpack("H", bytes(p[pay_end:pay_end + 2])),
-                            'chk': p[1:pay_end],
+                            'crc': crc,
+                            'chk': chk,
                             'raw': bytes(p)
                         }
                         if callback:  # For CRC checking.
