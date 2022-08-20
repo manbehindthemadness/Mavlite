@@ -422,6 +422,8 @@ class MavLink:
 
         decode COMMAND_ACK: struct.unpack("<HBBiBB", bytes(payload))
 
+        | command | result | progress | result_param2 | target_system | target_component |
+
         https://mavlink.io/en/messages/common.html#MAV_RESULT
         """
         return await self.packet.receive()

@@ -117,7 +117,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
     if raw is not None:
         data = list(raw)  # read up to 64 bytes
         skip = 0
-        if data is not None:
+        if data:
             for idx, byte in enumerate(range(len(data))):
                 if data[byte] in [85, 254, 253] and not skip:  # Check for start condition.
                     try:  # Don't check for another magic byte until after the end of this packet.
@@ -168,8 +168,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                         }
                         if callback:  # For CRC checking.
                             if await callback(pack, debug):
-                                pass
-                        read_buffer.append(pack)
+                                read_buffer.append(pack)
                         read_buffer = read_buffer[-buffer_size:]
                     except IndexError:
                         msg = f'bad_data {p}'
