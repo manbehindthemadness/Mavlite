@@ -116,9 +116,17 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
     raw = _uart.read(64)
     if raw is not None:
         data = list(raw)  # read up to 64 bytes
+        skip = 0
         if data is not None:
             for idx, byte in enumerate(range(len(data))):
-                if data[byte] == 0xfd:  # Check for start condition.
+                if data[byte] == 0xfd and not skip:  # Check for start condition.
+                    try:  # Don't check for another magic byte until after the end of this packet.
+                        p_len = data[idx + 1]
+                        min_length = 12 + p_len
+                        # TODO: We will need to add 13 bytes here if the communication is signed.
+                        skip = min_length
+                    except IndexError:
+                        pass
                     if stream:  # If we have a large partial stored from the last read iteration, finish it.
                         stream.extend(partial_buff)
                         packets.append(stream)
@@ -127,6 +135,8 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                     partial_buff = list()
                     stream = list()
                 partial_buff.append(data[byte])
+                if skip:
+                    skip -= 1
             stream.extend(partial_buff)
             if len(packets):
                 for p in packets:
@@ -181,7 +191,7 @@ async def uart_write(_uart: any, debug: bool = False):
                 pay_end = 10 + p[1]
                 msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
                 msg += f'comp_id {p[6]}, mes_id {struct.unpack("H", bytes(p[7:9]))[0]}, '
-                msg += f'payload {p[10:pay_end]}, chk {p[pay_end:pay_end + 2]}'
+                msg += f'payload {p[10:pay_end]}, crc {struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]}'
                 print('--------------------\n', 'sending', msg)
             _uart.write(bytes(packet))
             del write_buffer[idx]
