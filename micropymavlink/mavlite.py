@@ -23,7 +23,7 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
     p_len = struct.calcsize(_format)
     if p_len > len(payload):
         diff = p_len - len(payload)
-        suffix = [0] * diff
+        suffix = [0] * diff  # Pad to fit.
         payload.extend(suffix)
     if debug:
         print('using format:', _format)
@@ -121,6 +121,8 @@ class Packet:
 
     header = bytes()
 
+    x25 = X25crc()
+
     def __init__(self):
         self.dummy = None
 
@@ -142,6 +144,10 @@ class Packet:
         self.x25 = X25crc()
         self.header = bytes()
         self.payload = bytes()
+
+        self.psn += 1
+        if self.psn > 255:
+            self.psn = 0
         return self
 
     async def create_header(self):
