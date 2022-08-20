@@ -2,6 +2,9 @@
 import struct
 
 
+magic = [254, 253]
+
+
 class UART:
     # noinspection GrazieInspection
     """
@@ -119,7 +122,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
         skip = 0
         if data:
             for idx, byte in enumerate(range(len(data))):
-                if data[byte] in [85, 254, 253] and not skip:  # Check for start condition.
+                if data[byte] in magic and not skip:  # Check for start condition.
                     try:  # Don't check for another magic byte until after the end of this packet.
                         p_len = data[idx + 1]
                         min_length = 12 + p_len
@@ -146,14 +149,15 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                         try:
                             message_id = struct.unpack("H", bytes(p[7:9]))[0]
                         except RuntimeError as err:
-                            print(err, '\n', p[7:9])
-                            raise RuntimeError
+                            print('Unable to unpack message_id', err, '\n', p[7:9])
+                            break
                         pay_end = 10 + p[1]
                         payload = p[10:pay_end]
-                        try:
+                        try:  # Prevent a failure from snowballing into logic down the line.
                             crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
                         except RuntimeError as err:
-                            print(err, 'unable to decode crc\n', p)
+                            print(err, 'unable to decode crc\n', p, '\n', bytes(p))
+                            break  # Prevent a failure from snowballing into logic down the line.
                         chk = p[1:pay_end]
 
                         msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
@@ -198,9 +202,9 @@ async def uart_write(_uart: any, debug: bool = False):
                 print('--------------------\n', 'sending', msg)
             _uart.write(bytes(packet))
             del write_buffer[idx]
-    # else:
-    #     if debug:
-    #         print('write buffer empty')
+    else:
+        if debug:
+            print('write buffer empty')
     return write_buffer
 
 

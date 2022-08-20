@@ -21,6 +21,7 @@ import struct
 from micropymavlink.MSGFormats import formats
 from micropymavlink.uart import (
     uart_io,
+    uart_read,
     read_buffer,
     write_buffer,
 )
@@ -451,7 +452,7 @@ async def test(_uart):
     """
     m_id = 246
     m = MavLink([m_id])
-    await uart_io(_uart, callback=crc_check, debug=True)
+    await uart_read(_uart, callback=crc_check, debug=True)
     await m.heartbeat_wait()
     await m.send_command(
         command_id=m_id,
