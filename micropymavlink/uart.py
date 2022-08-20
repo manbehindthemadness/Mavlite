@@ -51,7 +51,7 @@ class UART:
             result = None
             Timeout = 3000
             while result is None and Timeout:
-                result = self.uart.read(64)
+                result = self.uart.read(n_bytes)
                 Timeout += 1
             return result
         else:
