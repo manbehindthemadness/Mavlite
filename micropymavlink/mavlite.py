@@ -1,6 +1,20 @@
 """
 This file is an attempt to produce a bare-minimum Mavlink UART communication system.
 https://docs.python.org/3/library/struct.html
+
+TypesList = {
+    "float":"f",
+    "double":"d",
+    "char":"s",
+    "int8_t":"b",
+    "int16_t":"h",
+    "int32_t":"l",
+    "int64_t":"q",
+    "uint8_t":"B",
+    "uint16_t":"H",
+    "uint32_t":"I",
+    "uint64_t":"Q"
+    }
 """
 import array
 import struct
@@ -405,6 +419,10 @@ class MavLink:
     async def receive(self):
         """
         Read from the incoming buffer... We need to break this out into receive_message and receive_command.
+
+        decode COMMAND_ACK: struct.unpack("<HBBiBB", bytes(payload))
+
+        https://mavlink.io/en/messages/common.html#MAV_RESULT
         """
         return await self.packet.receive()
 
