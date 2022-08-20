@@ -352,7 +352,7 @@ class MavLink:
         self.system_id = s_id
         self.component_id = c_id
 
-        message_ids.extend([76, 77, 0, 111])
+        message_ids.extend([76, 77, 0, 111, 253])
         for f in formats:
             if f not in message_ids:
                 del formats[f]
@@ -403,9 +403,10 @@ class MavLink:
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
-        confirmation = 1  # TODO: This needs to increment for retry operations (see note in the ACK wait method).
+        confirmation = 0  # TODO: This needs to increment for retry operations (see note in the ACK wait method).
         payload = [target_system, target_component, command_id, confirmation]
         payload.extend(list(params))
+        print('------------------\n payload to send', payload)
         self.command = await self.packet.create_packet(
             76,
             payload,
