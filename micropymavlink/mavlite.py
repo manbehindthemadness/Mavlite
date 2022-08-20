@@ -269,13 +269,17 @@ class Heartbeat:
         """
         beat = False
         hold = False
-        while not beat:
+        timeout = 0
+        while not beat and timeout < 3000:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 0:
                     hold = message['increment']
                     del read_buffer[idx]
+                timeout += 1
             if hold:
                 beat = hold
+            if timeout >= 3000:
+                print('warning heartbeat timed out')
         return beat
 
 
@@ -426,13 +430,13 @@ async def test(_uart):
     await m.heartbeat_wait()
     await m.send_command(
         command_id=m_id,
-        target_system=0,
-        target_component=0,
+        target_system=1,
+        target_component=1,
         params=[1, 0, 0, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
-        s_id=0,
-        c_id=0
+        s_id=1,
+        c_id=2
     )
     await uart_io(_uart, callback=crc_check, debug=True)
     print('\ntest complete')

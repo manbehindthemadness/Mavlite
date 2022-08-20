@@ -155,7 +155,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
 
                         msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
                         msg += f'comp_id {p[6]}, mes_id {message_id}, '
-                        msg += f'payload {payload}, crc {crc}'
+                        msg += f'payload {payload}, crc {crc}, \nraw {bytes(p)}'
                         pack = {
                             'message_id': message_id,
                             'system_id': p[5],
@@ -192,6 +192,7 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
                 msg += f'comp_id {p[6]}, mes_id {struct.unpack("H", bytes(p[7:9]))[0]}, '
                 msg += f'payload {p[10:pay_end]}, crc {struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]}'
+                msg += f'\nraw {bytes(p)}'
                 print('--------------------\n', 'sending', msg)
             _uart.write(bytes(packet))
             del write_buffer[idx]
