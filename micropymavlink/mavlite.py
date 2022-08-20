@@ -294,7 +294,7 @@ class Heartbeat:
                 if message['message_id'] == 0:
                     hold = message['increment']
                     del read_buffer[idx]
-                timeout += 1
+            timeout += 1
             if hold:
                 beat = hold
             if timeout >= 3000:
