@@ -150,7 +150,10 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                             raise RuntimeError
                         pay_end = 10 + p[1]
                         payload = p[10:pay_end]
-                        crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
+                        try:
+                            crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
+                        except RuntimeError as err:
+                            print(err, 'unable to decode crc\n', p)
                         chk = p[1:pay_end]
 
                         msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
@@ -195,9 +198,9 @@ async def uart_write(_uart: any, debug: bool = False):
                 print('--------------------\n', 'sending', msg)
             _uart.write(bytes(packet))
             del write_buffer[idx]
-    else:
-        if debug:
-            print('write buffer empty')
+    # else:
+    #     if debug:
+    #         print('write buffer empty')
     return write_buffer
 
 

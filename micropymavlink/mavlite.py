@@ -101,18 +101,22 @@ async def crc_check(pack: dict, debug: bool = False) -> bool:
     result = False
     chk = pack['chk']
     crc = pack['crc']
-    await x25.create(chk)
-    crc_extra = formats[pack['message_id']][1]
-    await x25.accumulate_str(struct.pack("B", crc_extra))  # noqa
-    _crc = x25.crc
-    if debug:
-        print(crc, _crc)
-    if crc == _crc:
-        result = True
-    if debug and not result:
-        print('CRC check failed')
-    elif debug:
-        print('CRC check passed')
+    try:
+        await x25.create(chk)
+        crc_extra = formats[pack['message_id']][1]
+        await x25.accumulate_str(struct.pack("B", crc_extra))  # noqa
+        _crc = x25.crc
+        if debug:
+            print(crc, _crc)
+        if crc == _crc:
+            result = True
+        if debug and not result:
+            print('CRC check failed')
+        elif debug:
+            print('CRC check passed')
+    except KeyError:
+        if debug:
+            print('Skipping CRC for unincluded message_id', pack['message_id'])
     return result
 
 
@@ -352,7 +356,7 @@ class MavLink:
         self.system_id = s_id
         self.component_id = c_id
 
-        message_ids.extend([76, 77, 0, 111, 253])
+        message_ids.extend([76, 77, 0, 111])
         for f in formats:
             if f not in message_ids:
                 del formats[f]
@@ -459,5 +463,8 @@ async def test(_uart):
         s_id=1,
         c_id=2
     )
-    await uart_io(_uart, callback=crc_check, debug=True)
+    watch = 10
+    while watch:
+        await uart_io(_uart, callback=crc_check, debug=True)
+        watch -= 1
     print('\ntest complete')
