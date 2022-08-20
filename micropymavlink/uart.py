@@ -116,7 +116,9 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
     global packets
     global read_buffer
     partial_buff = list()
-    raw = _uart.read(64)
+    raw = None
+    while not raw:
+        raw = _uart.read(64)
     if raw:
         data = list(raw)  # read up to 64 bytes
         skip = 0
