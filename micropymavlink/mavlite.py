@@ -69,12 +69,33 @@ class X25crc:
         """
         try:
             bytes_array = array.array('B', list(buf))
-        except (AttributeError, TypeError):
+        except TypeError:
             bytes_array = array.array('B', list(buf.encode()))
-        except (AttributeError, TypeError):
+        except AttributeError:
             raise ValueError
         await self.accumulate(bytes_array)
         return self
+
+
+x25 = X25crc()
+
+
+async def crc_check(pack: dict, debug: bool = False) -> bool:
+    """
+    CRC Checking callback.
+    """
+    result = False
+    chk = pack['chk']
+    crc = pack['crc']
+    await x25.create(chk)
+    _crc = x25.crc
+    if debug:
+        print(crc, _crc)
+    if crc == _crc:
+        result = True
+    if debug and not result:
+        print('CRC check failed')
+    return result
 
 
 class Packet:
@@ -97,8 +118,6 @@ class Packet:
     sig = 0x00  # Optional signature: https://mavlink.io/en/guide/message_signing.html
 
     crc_extra = 0x00
-
-    x25 = X25crc()
 
     header = bytes()
 
@@ -398,7 +417,7 @@ async def test(_uart):
     # )
     m_id = 246
     m = MavLink([m_id])
-    await uart_io(_uart, True)
+    await uart_io(_uart, callback=crc_check, debug=True)
     await m.heartbeat_wait()
     await m.send_command(
         command_id=m_id,
@@ -410,7 +429,7 @@ async def test(_uart):
         s_id=0,
         c_id=0
     )
-    await uart_io(_uart, True)
+    await uart_io(_uart, callback=crc_check, debug=True)
     # print('write_buffer', write_buffer)
     # print('read_buffer', read_buffer)
     # print('stream', stream)
