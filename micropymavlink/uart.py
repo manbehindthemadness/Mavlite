@@ -30,7 +30,7 @@ class UART:
             rx: any = None
     ):
         if self.mp:
-            self.uart = self.uart(1, baudrate)
+            self.uart = self.uart(s_id, baudrate)
             self.uart.init(baudrate, bits=bits, parity=parity, stop=stop, timeout=timeout, tx=tx, rx=rx)
         else:
             self.uart = self.uart(
@@ -43,7 +43,7 @@ class UART:
                 receiver_buffer_size=rxbuf
             )
 
-    def read(self, n_bytes: int = 8) -> uart.read:
+    async def read(self, n_bytes: int = 8) -> uart.read:
         """
         Read wrapper.
         """
@@ -57,19 +57,19 @@ class UART:
         else:
             return self.uart.read(n_bytes)
 
-    def readinto(self, buf: bytes) -> uart.readinto:
+    async def readinto(self, buf: bytes) -> uart.readinto:
         """
         Readinto wrapper.
         """
         return self.readinto(buf)
 
-    def readline(self) -> uart.readline:
+    async def readline(self) -> uart.readline:
         """
         Readline wrapper.
         """
         return self.uart.readline()
 
-    def write(self, buf: [str, bytes]) -> uart.write:
+    async def write(self, buf: [str, bytes]) -> uart.write:
         """
         Write wrapper
         """
@@ -77,13 +77,13 @@ class UART:
             buf = buf.encode()
         return self.uart.write(buf)
 
-    def deinit(self) -> uart.deinit:
+    async def deinit(self) -> uart.deinit:
         """
         Deinit wrapper.
         """
         return self.uart.deinit()
 
-    def setbaudrate(self, baudrate: int):
+    async def setbaudrate(self, baudrate: int):
         """
         Set baudrate wrapper.
         """
@@ -93,7 +93,7 @@ class UART:
             self.uart.baudrate = baudrate
             return self.uart
 
-    def any(self):
+    async def any(self):
         """
         Any wrapper.
         """
@@ -124,7 +124,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
     global packets
     global read_buffer
     partial_buff = list()
-    raw = _uart.read(64)
+    raw = await _uart.read(64)
     if raw:
         data = list(raw)  # read up to 64 bytes
         skip = 0
@@ -208,7 +208,7 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg += f'payload {p[10:pay_end]}, crc {struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]}'
                 msg += f'\nraw {bytes(p)}'
                 print('--------------------\n', 'sending', msg)
-            _uart.write(bytes(packet))
+            await _uart.write(bytes(packet))
             del write_buffer[idx]
     else:
         if debug:
