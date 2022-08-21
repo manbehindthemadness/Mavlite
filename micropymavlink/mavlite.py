@@ -374,6 +374,10 @@ class MavLink:
                 ack_payload = shutdown_command_function(*command_parameters_seven_long)
                 send_ack(payload)
 
+                ack_payload body:
+
+                [<result>, <progress>, <result_param2>]
+
     """
     global TERM
     term = TERM
@@ -423,11 +427,12 @@ class MavLink:
                             if cmd in self.callbacks.keys():
                                 callback = self.callbacks[cmd]
                                 ack_payload = await callback(*args)
-                                if len(ack_payload) != 4:
-                                    print('ERROR: callback results should have exactly four members, not', len(ack_payload))
+                                if len(ack_payload) != 3:
+                                    print('ERROR: callback results should have exactly three members, not', len(ack_payload))
                                     raise ValueError
+                                prefix = [cmd]
                                 suffix = [p['system_id'], p['component_id']]
-                                ack_payload.extend(suffix)
+                                ack_payload = prefix + ack_payload + suffix
                                 await self.send_message(  # Send command ACK.
                                     77,
                                     ack_payload,
