@@ -44,7 +44,13 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
         print('using format:', _format)
         print('payload length:', len(payload), 'payload', *payload)
     payload = struct.unpack(_format, bytes(payload))
+  # Decode Order
+    if (message_id<=255):
+        tmpPayload = payload[:]
+        for i in range(0, len(payload)):
+            payload[i] = tmpPayload[formats[message_id][2][i]]
     return payload
+
 
 
 class X25crc:
@@ -226,6 +232,11 @@ class Packet:
             print('payload malformed: expected', len(_format), 'arguments, received:', len(payload))
             raise ValueError
         _format = "<" + formats[message_id][0]
+          # Decode Order
+        if (message_id<=255):
+            tmpPayload = payload[:]
+            for i in range(0, len(payload)):
+                payload[formats[message_id][2][i]] = tmpPayload[i]
         self.payload = struct.pack(_format, *payload)
         await self.truncate()
         self.p_len = len(list(self.payload))
@@ -454,18 +465,24 @@ async def test(_uart):
     m = MavLink([m_id])
     await uart_read(_uart, callback=crc_check, debug=True)
     await m.heartbeat_wait()
+    await m.send_message(0,[18,8,0,0,0,3],c_flags=0,i_flags=0,s_id=255,c_id=0)
+
     await m.send_command(
-        command_id=m_id,
-        target_system=1,
-        target_component=1,
+        command_id=246,
+        target_system=0,
+        target_component=0,
         params=[1, 0, 0, 0, 0, 0, 0],
         c_flags=0,
         i_flags=0,
-        s_id=1,
-        c_id=2
+        s_id=255,
+        c_id=0
     )
+
     watch = 10
     while watch:
         await uart_io(_uart, callback=crc_check, debug=True)
+
+        if watch == 6:
+            write_buffer.append(b'\xfd\x1f\x00\x00\x00\xff\x00L\x00\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf6\x00\x01\xe9\x06')
         watch -= 1
     print('\ntest complete')

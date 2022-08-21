@@ -631,10 +631,18 @@ for name in fileNames:
     for message in Loaded.message:
         print(message.id)
         Format = ""
-        for fields in message.fields:
-            Format+=TypesList[fields.type]
+        Orders  = [0]*len(message.ordered_fieldnames)
+        for item in message.ordered_fields:
+            Format+=TypesList[item.type]
+            print(item.type)
         print(Format)
-        ItemDict[message.id] = (Format,Loaded.message_crcs[message.id])
+
+        for i in range(len(message.fields)):
+            Orders[i] = message.ordered_fieldnames.index(message.fields[i].name)
+        
+            
+        print(Orders)
+        ItemDict[message.id] = (Format,Loaded.message_crcs[message.id],Orders if message.id <=255 else [])
 
 destination = here / 'micropymavlink/MSGFormats.py'
 

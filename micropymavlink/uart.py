@@ -209,7 +209,11 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg += f'\nraw {bytes(p)}'
                 print('--------------------\n', 'sending', msg)
             await _uart.write(bytes(packet))
+
             del write_buffer[idx]
+
+
+
     else:
         if debug:
             print('write buffer empty')
