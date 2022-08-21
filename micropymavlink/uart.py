@@ -119,6 +119,9 @@ buffer_size = 16
 async def uart_read(_uart: any = None, callback: any = None, debug: bool = False) -> list:
     """
     Uart packet listener.
+
+    TODO: In the future we will need to constrain this traffic to only broadcast packets and packets that are
+            addressed to us. This could overflow real fast with more than a few devices on the network.
     """
     global stream
     global packets

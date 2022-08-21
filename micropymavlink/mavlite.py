@@ -441,7 +441,8 @@ class MavLink:
         )
         result = await self.packet.send()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
-            ack = await self.ack_wait(command_id, debug)
+            ack = await self.ack_wait(command_id, debug)  # noqa
+            # TODO: We need to look into these timeouts and figure out why heartbeat_wait works and this doesn't.
             # if not ack and self.retries:
             #     self.retries -= 1
             #     await self.send_command(
@@ -549,7 +550,7 @@ async def test(_uart):
             params=[1, 0, 0, 0, 0, 0, 0],
             c_flags=0,
             i_flags=0,
-            s_id=1,
+            s_id=1,  # Revised this so, we can get ACK packets that are addressed to us.
             c_id=1,
             debug=True
         )
