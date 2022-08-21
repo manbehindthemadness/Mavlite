@@ -26,12 +26,13 @@ from micropymavlink.MSGFormats import formats
 from micropymavlink.uart import (
     uart_read,
     uart_write,
-    read_buffer,
+    # read_buffer,
     write_buffer,
 )
 
 
 TERM = False
+read_buffer = list()
 
 
 async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
@@ -333,26 +334,22 @@ class Command:
         self.c_id = c_id
 
     @staticmethod
-    async def wait(cmd_id: int, debug: bool = False) -> bool:
+    async def wait(cmd_id: int, debug: bool = False):
         """
         This will wait for our command ACK response.
-
-        TODO: we need to create some way of handling both broadcast and targeted ACKs as broadcast ones
-                have a payload of only the issued command_id.
-
-        TODO: Why does this always see an empty read buffer?
         """
+        global read_buffer
         ack = False
         timeout = 0
         while not ack and timeout and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
                     if debug:
-                        print('found ACK')
+                        print('found ACK **************************************************************************')
             if timeout >= 3000:
                 if debug:
                     print('warning ACK timed out')
-            await asyncio.sleep(0.0001)
+            await asyncio.sleep(0.001)
             timeout += 1
         return ack
 
@@ -383,13 +380,15 @@ class MavLink:
         """
         Wait for heartbeat packet.
         """
-        return await self.heartbeat.wait()
+        result = await self.heartbeat.wait()  # noqa
+        return result
 
     async def ack_wait(self, command_id: int, debug: bool = False):
         """
         This will wait for a command ACK up to a specific timeout.
         """
-        return await self.command.wait(command_id, debug)
+        result = await self.command.wait(command_id, debug)  # noqa
+        return result
 
     async def send_message(
             self,
@@ -458,7 +457,8 @@ class MavLink:
             #     )
             #     if debug:
             #         print('ACK timeout, retrying command', self.retries)
-            # self.retries = 10
+
+            self.retries = 10
         return result
 
     async def receive(self):
@@ -482,9 +482,10 @@ class MavLink:
             """
             Read buffer loop.
             """
+            global read_buffer
             global TERM
             while not TERM:
-                await uart_read(_uart, crc_check, _debug)
+                read_buffer = await uart_read(_uart, crc_check, _debug)
                 await asyncio.sleep(0.0001)
 
         async def write_loop(_uart: any, _debug: bool):

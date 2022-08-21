@@ -113,7 +113,7 @@ read_buffer = list()
 write_buffer = list()
 
 
-buffer_size = 16
+buffer_size = 8
 
 
 async def uart_read(_uart: any = None, callback: any = None, debug: bool = False) -> list:
