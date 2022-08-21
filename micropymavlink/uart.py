@@ -2,7 +2,7 @@
 import struct
 
 
-magic = [254, 253]
+magic = [253]
 
 
 class UART:
@@ -113,7 +113,7 @@ read_buffer = list()
 write_buffer = list()
 
 
-buffer_size = 3
+buffer_size = 16
 
 
 async def uart_read(_uart: any = None, callback: any = None, debug: bool = False) -> list:

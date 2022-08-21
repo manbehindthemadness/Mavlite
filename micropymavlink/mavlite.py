@@ -18,13 +18,20 @@ TypesList = {
 """
 import array
 import struct
+try:
+    import asyncio
+except ImportError:
+    import uasyncio as asyncio  # noqa
 from micropymavlink.MSGFormats import formats
 from micropymavlink.uart import (
-    uart_io,
     uart_read,
+    uart_write,
     read_buffer,
     write_buffer,
 )
+
+
+TERM = False
 
 
 async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
@@ -300,7 +307,7 @@ class Heartbeat:
         beat = False
         hold = False
         timeout = 0
-        while not beat and timeout < 3000:
+        while not beat and timeout < 3000 and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 0:
                     hold = message['increment']
@@ -310,6 +317,7 @@ class Heartbeat:
                 beat = hold
             if timeout >= 3000:
                 print('warning heartbeat timed out')
+            await asyncio.sleep(0.0001)
         return beat
 
 
@@ -318,45 +326,34 @@ class Command:
     This will allow us to send commands and read the ACK.
     """
 
+    packet = Packet()
+
     def __init__(self, s_id: int, c_id: int):
         self.s_id = s_id
         self.c_id = c_id
 
-    async def wait(self, cmd_id: int, debug: bool = False) -> bool:
+    @staticmethod
+    async def wait(cmd_id: int, debug: bool = False) -> bool:
         """
         This will wait for our command ACK response.
 
-        TODO: We need a timeout here to prevent blocking.
+        TODO: we need to create some way of handling both broadcast and targeted ACKs as broadcast ones
+                have a payload of only the issued command_id.
 
-        TODO: I am not 100% sure how the addressing works here; however, it is my assumption that the
-                component and system IDs sent in the header identify the packet sender,
-                and the target component and system IDs in the payload represent the desired recipient.
+        TODO: Why does this always see an empty read buffer?
         """
         ack = False
-        while not ack:
+        timeout = 0
+        while not ack and timeout and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
                     if debug:
                         print('found ACK')
-                    contents = decode_payload(77, message['payload'])
-                    command_id, result, progress, result_param2, target_system, target_component = contents
-                    if [target_component, target_system, command_id] == [self.c_id, self.s_id, cmd_id]:
-                        ack = True
-                        del read_buffer[idx]
-                        if debug:
-                            print('ACK accepted')
-                        break
-                    else:
-                        if debug:
-                            print('ACK rejected')
-                            print(
-                                'expected values: cmd_id', cmd_id, 'system_id', self.s_id,
-                                'component_id', self.c_id
-                            )
-                            print(
-                                'values received: cmd_id', command_id, 'system_id', target_system,
-                                'component_id', target_component
-                            )
+            if timeout >= 3000:
+                if debug:
+                    print('warning ACK timed out')
+            await asyncio.sleep(0.0001)
+            timeout += 1
         return ack
 
 
@@ -364,8 +361,10 @@ class MavLink:
     """
     This is where it all comes together babah.
     """
+    global TERM
+    term = TERM
 
-    def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff):
+    def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff, retries: int = 10):
         self.system_id = s_id
         self.component_id = c_id
 
@@ -378,11 +377,19 @@ class MavLink:
         self.packet = Packet()
         self.command = Command(s_id, c_id)
 
+        self.retries = retries
+
     async def heartbeat_wait(self):
         """
         Wait for heartbeat packet.
         """
         return await self.heartbeat.wait()
+
+    async def ack_wait(self, command_id: int, debug: bool = False):
+        """
+        This will wait for a command ACK up to a specific timeout.
+        """
+        return await self.command.wait(command_id, debug)
 
     async def send_message(
             self,
@@ -416,6 +423,7 @@ class MavLink:
             i_flags: int = 0x00,
             s_id: int = 0x01,
             c_id: int = 0x01,
+            debug: bool = False
     ) -> Packet:
         """
         Send a command with a 7 byte payload and wait for ACK.
@@ -423,8 +431,7 @@ class MavLink:
         confirmation = 0  # TODO: This needs to increment for retry operations (see note in the ACK wait method).
         payload = [target_system, target_component, command_id, confirmation]
         payload.extend(list(params))
-        print('------------------\n payload to send', payload)
-        self.command = await self.packet.create_packet(
+        await self.packet.create_packet(
             76,
             payload,
             c_flags=c_flags,
@@ -432,7 +439,26 @@ class MavLink:
             s_id=s_id,
             c_id=c_id
         )
-        return await self.packet.send()
+        result = await self.packet.send()
+        if target_system != 255:  # Skip ACK wait for broadcast messages.
+            ack = await self.ack_wait(command_id, debug)
+            # if not ack and self.retries:
+            #     self.retries -= 1
+            #     await self.send_command(
+            #         command_id,
+            #         target_system,
+            #         target_component,
+            #         params,
+            #         c_flags,
+            #         i_flags,
+            #         s_id,
+            #         c_id,
+            #         debug
+            #     )
+            #     if debug:
+            #         print('ACK timeout, retrying command', self.retries)
+            # self.retries = 10
+        return result
 
     async def receive(self):
         """
@@ -445,6 +471,54 @@ class MavLink:
         https://mavlink.io/en/messages/common.html#MAV_RESULT
         """
         return await self.packet.receive()
+
+    async def io_buffers(self, uart: any, debug: bool = False):
+        """
+        This will return the tasks required to handle UART I/O via our read and write buffers.
+        """
+
+        async def read_loop(_uart: any, _debug: bool):
+            """
+            Read buffer loop.
+            """
+            global TERM
+            while not TERM:
+                await uart_read(_uart, crc_check, _debug)
+                await asyncio.sleep(0.0001)
+
+        async def write_loop(_uart: any, _debug: bool):
+            """
+            Write loop.
+            """
+            global TERM
+            while not TERM:
+                await uart_write(_uart, _debug)
+                await asyncio.sleep(0.0001)
+
+        async def heartbeat_loop(parent, _uart: any, _debug: bool):
+            """
+            Let's send some heartbeat packets.
+            """
+            global TERM
+            while not TERM:
+                await parent.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
+                await asyncio.sleep(1)
+
+        return asyncio.create_task(
+            read_loop(uart, debug)
+        ), asyncio.create_task(
+            write_loop(uart, debug)
+        ), asyncio.create_task(
+            heartbeat_loop(self, uart, debug)
+        )
+
+    def __exit__(self, *args):
+        """
+        Bail out of the runtime.
+        """
+        global TERM
+        TERM = False
+        self.term = True
 
 
 async def test(_uart):
@@ -463,24 +537,31 @@ async def test(_uart):
                param1, 0, 0, 0, 0, 0, 0)
     """
     m_id = 246
-    m = MavLink([m_id])
-    await uart_read(_uart, callback=crc_check, debug=True)
-    await m.heartbeat_wait()
-    await m.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
+    m = MavLink([m_id, 253])
 
-    await m.send_command(
-        command_id=246,
-        target_system=0,
-        target_component=0,
-        params=[1, 0, 0, 0, 0, 0, 0],
-        c_flags=0,
-        i_flags=0,
-        s_id=255,
-        c_id=0
-    )
+    async def send():
+        """Send test command"""
+        await m.heartbeat_wait()
+        await m.send_command(
+            command_id=246,
+            target_system=0,
+            target_component=0,
+            params=[1, 0, 0, 0, 0, 0, 0],
+            c_flags=0,
+            i_flags=0,
+            s_id=1,
+            c_id=1,
+            debug=True
+        )
+        print('\n-----------------------------test complete: **laughs in MavLink**-----------------------------------')
+        m.__exit__()
 
-    watch = 10
-    while watch:
-        await uart_io(_uart, callback=crc_check, debug=True)
-        watch -= 1
-    print('\ntest complete')
+    async def main(uart_):
+        """
+        Test mainloop.
+        """
+        tasks = await m.io_buffers(uart_, debug=True)
+        snd_cmd = asyncio.create_task(send())
+        await asyncio.gather(snd_cmd, *tasks)
+
+    asyncio.run(main(_uart))
