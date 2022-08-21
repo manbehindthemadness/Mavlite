@@ -16,6 +16,7 @@ TypesList = {
     "uint64_t":"Q"
     }
 """
+import gc
 import array
 import struct
 from time import monotonic_ns
@@ -538,6 +539,9 @@ class MavLink:
             while not TERM:
                 read_buffer = await uart_read(_uart, crc_check, _debug)
                 await parent.command_parser(_debug)
+                gc.collect()
+                if _debug:
+                    print('memory allocation:', gc.mem_alloc())  # noqa
                 await asyncio.sleep(0.0001)
 
         async def write_loop(_uart: any, _debug: bool):
