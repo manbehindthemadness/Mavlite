@@ -558,7 +558,7 @@ class MavLink:
                 await parent.command_parser(_debug)
                 gc.collect()
                 if _debug:
-                    print('memory allocation:', gc.mem_alloc())  # noqa
+                    print('\nmemory allocation:', gc.mem_alloc(), '\n')  # noqa
                 await asyncio.sleep(0.0001)
 
         async def write_loop(_uart: any, _debug: bool):
