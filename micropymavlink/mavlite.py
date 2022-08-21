@@ -481,8 +481,5 @@ async def test(_uart):
     watch = 10
     while watch:
         await uart_io(_uart, callback=crc_check, debug=True)
-
-        if watch == 6:
-            write_buffer.append(b'\xfd\x1f\x00\x00\x00\xff\x00L\x00\x00\x00\x00\x80?\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xf6\x00\x01\xe9\x06')
         watch -= 1
     print('\ntest complete')
