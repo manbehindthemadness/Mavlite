@@ -361,6 +361,17 @@ class Command:
 class MavLink:
     """
     This is where it all comes together babah.
+
+    NOTE: When using callbacks for incoming command executions ensure they accept 7 arguments for the params:
+                callbacks = {
+                    246: shutdown_command_function,
+                    <id>: <command>
+                }
+
+                On reception the command parser will:
+
+                shutdown_command_function(*command_parameters_seven_long)
+
     """
     global TERM
     term = TERM
