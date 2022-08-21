@@ -1,9 +1,11 @@
 #!/usr/bin/env python
-'''
+"""
 mavlink python parse functions
 Copyright Andrew Tridgell 2011
 Released under GNU GPL version 3 or later
-'''
+
+Disclaimer: The bulk of the logic found here is directly borrowed from PyMavLink. It is auto-generated and pretty hairy.
+"""
 from __future__ import print_function
 from builtins import range
 from builtins import object
@@ -21,18 +23,29 @@ PROTOCOL_1_0 = "1.0"
 PROTOCOL_2_0 = "2.0"
 
 # message flags
-FLAG_HAVE_TARGET_SYSTEM    = 1
+FLAG_HAVE_TARGET_SYSTEM = 1
 FLAG_HAVE_TARGET_COMPONENT = 2
 
+
 class MAVParseError(Exception):
+    """
+    Adapted code.
+    """
+
     def __init__(self, message, inner_exception=None):
         self.message = message
         self.inner_exception = inner_exception
         self.exception_info = sys.exc_info()
+
     def __str__(self):
         return self.message
 
+
 class MAVField(object):
+    """
+    Adapted code.
+    """
+
     def __init__(self, name, type, print_format, xml, description='', enum='', display='', units='', instance=False):
         self.name = name
         self.name_upper = name.upper()
@@ -45,22 +58,23 @@ class MAVField(object):
         self.const_value = None
         self.print_format = print_format
         self.instance = instance
+        self.test_value = None
         lengths = {
-        'float'    : 4,
-        'double'   : 8,
-        'char'     : 1,
-        'int8_t'   : 1,
-        'uint8_t'  : 1,
-        'uint8_t_mavlink_version'  : 1,
-        'int16_t'  : 2,
-        'uint16_t' : 2,
-        'int32_t'  : 4,
-        'uint32_t' : 4,
-        'int64_t'  : 8,
-        'uint64_t' : 8,
+            'float': 4,
+            'double': 8,
+            'char': 1,
+            'int8_t': 1,
+            'uint8_t': 1,
+            'uint8_t_mavlink_version': 1,
+            'int16_t': 2,
+            'uint16_t': 2,
+            'int32_t': 4,
+            'uint32_t': 4,
+            'int64_t': 8,
+            'uint64_t': 8,
         }
 
-        if type=='uint8_t_mavlink_version':
+        if type == 'uint8_t_mavlink_version':
             type = 'uint8_t'
             self.omit_arg = True
             self.const_value = xml.version
@@ -68,16 +82,16 @@ class MAVField(object):
         aidx = type.find("[")
         if aidx != -1:
             assert type[-1:] == ']'
-            self.array_length = int(type[aidx+1:-1])
+            self.array_length = int(type[aidx + 1:-1])
             type = type[0:aidx]
             if type == 'array':
                 type = 'int8_t'
         if type in lengths:
             self.type_length = lengths[type]
             self.type = type
-        elif (type+"_t") in lengths:
-            self.type_length = lengths[type+"_t"]
-            self.type = type+'_t'
+        elif (type + "_t") in lengths:
+            self.type_length = lengths[type + "_t"]
+            self.type = type + '_t'
         else:
             raise MAVParseError("unknown type '%s'" % type)
         if self.array_length != 0:
@@ -87,34 +101,34 @@ class MAVField(object):
         self.type_upper = self.type.upper()
 
     def gen_test_value(self, i):
-        '''generate a testsuite value for a MAVField'''
+        """generate a testsuite value for a MAVField"""
         if self.const_value:
             return self.const_value
         elif self.type == 'float':
-            return 17.0 + self.wire_offset*7 + i
+            return 17.0 + self.wire_offset * 7 + i
         elif self.type == 'double':
-            return 123.0 + self.wire_offset*7 + i
+            return 123.0 + self.wire_offset * 7 + i
         elif self.type == 'char':
-            return chr(ord('A') + (self.wire_offset + i)%26)
-        elif self.type in [ 'int8_t', 'uint8_t' ]:
-            return (5 + self.wire_offset*67 + i) & 0xFF
+            return chr(ord('A') + (self.wire_offset + i) % 26)
+        elif self.type in ['int8_t', 'uint8_t']:
+            return (5 + self.wire_offset * 67 + i) & 0xFF
         elif self.type in ['int16_t', 'uint16_t']:
-            return (17235 + self.wire_offset*52 + i) & 0xFFFF
+            return (17235 + self.wire_offset * 52 + i) & 0xFFFF
         elif self.type in ['int32_t', 'uint32_t']:
-            return (963497464 + self.wire_offset*52 + i)&0xFFFFFFFF
+            return (963497464 + self.wire_offset * 52 + i) & 0xFFFFFFFF
         elif self.type in ['int64_t', 'uint64_t']:
-            return 93372036854775807 + self.wire_offset*63 + i
+            return 93372036854775807 + self.wire_offset * 63 + i
         else:
             raise MAVParseError('unknown type %s' % self.type)
 
     def set_test_value(self):
-        '''set a testsuite value for a MAVField'''
+        """set a testsuite value for a MAVField"""
         if self.array_length:
             self.test_value = []
             for i in range(self.array_length):
                 self.test_value.append(self.gen_test_value(i))
         else:
-                self.test_value = self.gen_test_value(0)
+            self.test_value = self.gen_test_value(0)
         if self.type == 'char' and self.array_length:
             v = ""
             for c in self.test_value:
@@ -123,6 +137,9 @@ class MAVField(object):
 
 
 class MAVType(object):
+    """
+    """
+
     def __init__(self, name, id, linenumber, description=''):
         self.name = name
         self.name_lower = name.lower()
@@ -135,13 +152,18 @@ class MAVType(object):
         self.needs_pack = False
 
     def base_fields(self):
-        '''return number of non-extended fields'''
+        """return number of non-extended fields"""
         if self.extensions_start is None:
             return len(self.fields)
         return len(self.fields[:self.extensions_start])
 
+
 class MAVEnumParam(object):
-    def __init__(self, index, description='', label='', units='', enum='', increment='', minValue='', maxValue='', reserved=False, default=''):
+    """
+    """
+
+    def __init__(self, index, description='', label='', units='', enum='', increment='', minValue='', maxValue='',
+                 reserved=False, default=''):
         self.index = index
         self.description = description
         self.label = label
@@ -157,12 +179,18 @@ class MAVEnumParam(object):
         self.set_description(description)
 
     def set_description(self, description):
+        """
+        """
         if not description.strip() and self.reserved:
             self.description = 'Reserved (default:%s)' % self.default
         else:
             self.description = description
 
+
 class MAVEnumEntry(object):
+    """
+    """
+
     def __init__(self, name, value, description='', end_marker=False, autovalue=False, origin_file='', origin_line=0):
         self.name = name
         self.value = value
@@ -173,7 +201,11 @@ class MAVEnumEntry(object):
         self.origin_file = origin_file
         self.origin_line = origin_line
 
+
 class MAVEnum(object):
+    """
+    """
+
     def __init__(self, name, linenumber, description='', bitmask=False):
         self.name = name
         self.description = description
@@ -184,8 +216,10 @@ class MAVEnum(object):
         self.bitmask = bitmask
 
 
+# noinspection PyArgumentEqualDefault
 class MAVXML(object):
-    '''parse a mavlink XML file'''
+    """parse a mavlink XML file"""
+
     def __init__(self, filename, wire_protocol_version=PROTOCOL_0_9):
         self.filename = filename
         self.basename = os.path.basename(filename)
@@ -228,21 +262,25 @@ class MAVXML(object):
             self.allow_extensions = True
         else:
             print("Unknown wire protocol version")
-            print("Available versions are: %s %s" % (PROTOCOL_0_9, PROTOCOL_1_0, PROTOCOL_2_0))
+            print("Available versions are: %s %s" % (PROTOCOL_0_9, PROTOCOL_1_0, PROTOCOL_2_0))  # noqa
             raise MAVParseError('Unknown MAVLink wire protocol version %s' % wire_protocol_version)
 
         in_element_list = []
 
         def check_attrs(attrs, check, where):
+            """
+            """
             for c in check:
                 if c not in attrs:
                     raise MAVParseError('expected missing %s "%s" attribute at %s:%u' % (
                         where, c, filename, p.CurrentLineNumber))
 
         def start_element(name, attrs):
+            """
+            """
             in_element_list.append(name)
             in_element = '.'.join(in_element_list)
-            #print in_element
+            # print in_element
             if in_element == "mavlink.messages.message":
                 check_attrs(attrs, ['name', 'id'], 'message')
                 self.message.append(MAVType(attrs['name'], attrs['id'], p.CurrentLineNumber))
@@ -257,7 +295,8 @@ class MAVXML(object):
                 if units:
                     units = '[' + units + ']'
                 instance = attrs.get('instance', False)
-                new_field = MAVField(attrs['name'], attrs['type'], print_format, self, enum=enum, display=display, units=units, instance=instance)
+                new_field = MAVField(attrs['name'], attrs['type'], print_format, self, enum=enum, display=display,
+                                     units=units, instance=instance)
                 if self.message[-1].extensions_start is None or self.allow_extensions:
                     self.message[-1].fields.append(new_field)
             elif in_element == "mavlink.enums.enum":
@@ -274,24 +313,27 @@ class MAVXML(object):
                     value = self.enum[-1].highest_value + 1
                     autovalue = True
                 # check lowest value
-                if (self.enum[-1].start_value is None or value < self.enum[-1].start_value):
+                if self.enum[-1].start_value is None or value < self.enum[-1].start_value:
                     self.enum[-1].start_value = value
                 # check highest value
-                if (value > self.enum[-1].highest_value):
+                if value > self.enum[-1].highest_value:
                     self.enum[-1].highest_value = value
                 # append the new entry
-                self.enum[-1].entry.append(MAVEnumEntry(attrs['name'], value, '', False, autovalue, self.filename, p.CurrentLineNumber))
+                self.enum[-1].entry.append(
+                    MAVEnumEntry(attrs['name'], value, '', False, autovalue, self.filename, p.CurrentLineNumber))
             elif in_element == "mavlink.enums.enum.entry.param":
                 check_attrs(attrs, ['index'], 'enum param')
                 self.enum[-1].entry[-1].param.append(
-                                                MAVEnumParam(attrs['index'], 
-                                                        label=attrs.get('label', ''), units=attrs.get('units', ''), 
-                                                        enum=attrs.get('enum', ''), increment=attrs.get('increment', ''), 
-                                                        minValue=attrs.get('minValue', ''), 
-                                                        maxValue=attrs.get('maxValue', ''), default=attrs.get('default', '0'), 
-                                                        reserved=attrs.get('reserved', False) ))
+                    MAVEnumParam(attrs['index'],
+                                 label=attrs.get('label', ''), units=attrs.get('units', ''),
+                                 enum=attrs.get('enum', ''), increment=attrs.get('increment', ''),
+                                 minValue=attrs.get('minValue', ''),
+                                 maxValue=attrs.get('maxValue', ''), default=attrs.get('default', '0'),
+                                 reserved=attrs.get('reserved', False)))
 
         def is_target_system_field(m, f):
+            """
+            """
             if f.name == 'target_system':
                 return True
             if m.name == "MANUAL_CONTROL" and f.name == "target":
@@ -299,9 +341,13 @@ class MAVXML(object):
             return False
 
         def end_element(name):
+            """
+            """
             in_element_list.pop()
 
         def char_data(data):
+            """
+            """
             in_element = '.'.join(in_element_list)
             if in_element == "mavlink.messages.message.description":
                 self.message[-1].description += data
@@ -326,25 +372,31 @@ class MAVXML(object):
         p.CharacterDataHandler = char_data
         p.ParseFile(f)
         f.close()
-   
 
-        #Post process to add reserved params (for docs)
+        # Post process to add reserved params (for docs)
         for current_enum in self.enum:
-            if not 'MAV_CMD' in current_enum.name:
+            if 'MAV_CMD' not in current_enum.name:
                 continue
             for enum_entry in current_enum.entry:
                 if len(enum_entry.param) == 7:
                     continue
-                params_dict=dict()
-                for param_index in range (1,8):
-                    params_dict[param_index] = MAVEnumParam(param_index, label='', units='', enum='', increment='', 
-                                                        minValue='', maxValue='', default='0', reserved='True')
+                params_dict = dict()
+                for param_index in range(1, 8):
+                    params_dict[param_index] = MAVEnumParam(
+                        param_index,
+                        label='',
+                        units='',
+                        enum='',
+                        increment='',
+                        minValue='',
+                        maxValue='',
+                        default='0',
+                        reserved='True'  # noqa
+                    )
 
                 for a_param in enum_entry.param:
                     params_dict[int(a_param.index)] = a_param
-                enum_entry.param=params_dict.values()
-                
-
+                enum_entry.param = params_dict.values()  # noqa
 
         self.message_lengths = {}
         self.message_min_lengths = {}
@@ -380,13 +432,13 @@ class MAVXML(object):
             m.target_system_ofs = 0
             m.target_component_ofs = 0
             m.field_offsets = {}
-            
+
             if self.sort_fields:
                 # when we have extensions we only sort up to the first extended field
                 sort_end = m.base_fields()
                 m.ordered_fields = sorted(m.fields[:sort_end],
-                                                   key=operator.attrgetter('type_length'),
-                                                   reverse=True)
+                                          key=operator.attrgetter('type_length'),
+                                          reverse=True)
                 m.ordered_fields.extend(m.fields[sort_end:])
             else:
                 m.ordered_fields = m.fields
@@ -427,8 +479,8 @@ class MAVXML(object):
                     m.target_component_ofs = f.wire_offset
             m.num_fields = len(m.fieldnames)
             if m.num_fields > 64:
-                raise MAVParseError("num_fields=%u : Maximum number of field names allowed is" % (
-                    m.num_fields, 64))
+                raise MAVParseError(
+                    "num_fields=%u : Maximum number of field names allowed is" % (m.num_fields, 64))  # noqa
             m.crc_extra = message_checksum(m)
             print(m.crc_extra)
             key = m.id
@@ -449,8 +501,8 @@ class MAVXML(object):
 
 
 def message_checksum(msg):
-    '''calculate CRC-16/MCRF4XX checksum of the key fields of a message, so we
-       can detect incompatible XML changes'''
+    """calculate CRC-16/MCRF4XX checksum of the key fields of a message, so we
+       can detect incompatible XML changes"""
     crc = x25crc()
     crc.accumulate_str(msg.name + ' ')
     # in order to allow for extensions the crc does not include
@@ -462,10 +514,11 @@ def message_checksum(msg):
         crc.accumulate_str(f.name + ' ')
         if f.array_length:
             crc.accumulate([f.array_length])
-    return (crc.crc&0xFF) ^ (crc.crc>>8)
+    return (crc.crc & 0xFF) ^ (crc.crc >> 8)
+
 
 def merge_enums(xml):
-    '''merge enums between XML files'''
+    """merge enums between XML files"""
     emap = {}
     for x in xml:
         newenums = []
@@ -473,7 +526,7 @@ def merge_enums(xml):
             if enum.name in emap:
                 emapitem = emap[enum.name]
                 # check for possible conflicting auto-assigned values after merge
-                if (emapitem.start_value <= enum.highest_value and emapitem.highest_value >= enum.start_value):
+                if emapitem.start_value <= enum.highest_value and emapitem.highest_value >= enum.start_value:
                     for entry in emapitem.entry:
                         # correct the value if necessary, but only if it was auto-assigned to begin with
                         if entry.value <= enum.highest_value and entry.autovalue is True:
@@ -495,10 +548,11 @@ def merge_enums(xml):
                                reverse=False)
         # add a ENUM_END
         emap[e].entry.append(MAVEnumEntry("%s_ENUM_END" % emap[e].name,
-                                            emap[e].entry[-1].value+1, end_marker=True))
+                                          emap[e].entry[-1].value + 1, end_marker=True))
+
 
 def check_duplicates(xml):
-    '''check for duplicate message IDs'''
+    """check for duplicate message IDs"""
 
     merge_enums(xml)
 
@@ -545,28 +599,33 @@ def check_duplicates(xml):
                         s1, entry.value, entry.origin_file, entry.origin_line,
                         enummap.get(s1) or enummap.get(s2)))
                     return True
-                enummap[s1] = enummap[s2] = "%s.%s = %s @ %s:%u" % (enum.name, entry.name, entry.value, entry.origin_file, entry.origin_line)
+                enummap[s1] = enummap[s2] = "%s.%s = %s @ %s:%u" % (
+                    enum.name, entry.name, entry.value, entry.origin_file, entry.origin_line)
 
     return False
 
 
-
 def total_msgs(xml):
-    '''count total number of msgs'''
+    """count total number of msgs"""
     count = 0
     for x in xml:
         count += len(x.message)
     return count
 
+
 def mkdir_p(dir):
+    """
+    """
     try:
         os.makedirs(dir)
     except OSError as exc:
         if exc.errno != errno.EEXIST:
             raise
 
+
 class x25crc(object):
-    '''CRC-16/MCRF4XX - based on checksum.h from mavlink library'''
+    """CRC-16/MCRF4XX - based on checksum.h from mavlink library"""
+
     def __init__(self, buf=None):
         self.crc = 0xffff
         if buf is not None:
@@ -576,16 +635,16 @@ class x25crc(object):
                 self.accumulate(buf)
 
     def accumulate(self, buf):
-        '''add in some more bytes'''
+        """add in some more bytes"""
         accum = self.crc
         for b in buf:
             tmp = b ^ (accum & 0xff)
-            tmp = (tmp ^ (tmp<<4)) & 0xFF
-            accum = (accum>>8) ^ (tmp<<8) ^ (tmp<<3) ^ (tmp>>4)
+            tmp = (tmp ^ (tmp << 4)) & 0xFF
+            accum = (accum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)
         self.crc = accum
 
     def accumulate_str(self, buf):
-        '''add in some more bytes'''
+        """add in some more bytes"""
         accum = self.crc
         import array
         bytes_array = array.array('B')
@@ -599,19 +658,19 @@ class x25crc(object):
 
 
 TypesList = {
-    "float":"f",
-    "double":"d",
-    "char":"s",
-    "int8_t":"b",
-    "int16_t":"h",
-    "int32_t":"l",
-    "int64_t":"q",
-    "uint8_t":"B",
-    "uint8_t_mavlink_version":"B",
-    "uint16_t":"H",
-    "uint32_t":"I",
-    "uint64_t":"Q"}
-    
+    "float": "f",
+    "double": "d",
+    "char": "s",
+    "int8_t": "b",
+    "int16_t": "h",
+    "int32_t": "l",
+    "int64_t": "q",
+    "uint8_t": "B",
+    "uint8_t_mavlink_version": "B",
+    "uint16_t": "H",
+    "uint32_t": "I",
+    "uint64_t": "Q"}
+
 ItemDict = {}
 
 here = Path(os.path.abspath(os.path.join(os.path.dirname(__file__))))
@@ -627,22 +686,21 @@ fileNames = [
 
 for name in fileNames:
     template = os.path.join(filepath, name)
-    Loaded = MAVXML(template,wire_protocol_version=PROTOCOL_2_0)
+    Loaded = MAVXML(template, wire_protocol_version=PROTOCOL_2_0)
     for message in Loaded.message:
         print(message.id)
         Format = ""
-        Orders  = [0]*len(message.ordered_fieldnames)
+        Orders = [0] * len(message.ordered_fieldnames)
         for item in message.ordered_fields:
-            Format+=TypesList[item.type]
+            Format += TypesList[item.type]
             print(item.type)
         print(Format)
 
         for i in range(len(message.fields)):
             Orders[i] = message.ordered_fieldnames.index(message.fields[i].name)
-        
-            
+
         print(Orders)
-        ItemDict[message.id] = (Format,Loaded.message_crcs[message.id],Orders if message.id <=255 else [])
+        ItemDict[message.id] = (Format, Loaded.message_crcs[message.id], Orders if message.id <= 255 else [])
 
 destination = here / 'micropymavlink/MSGFormats.py'
 
