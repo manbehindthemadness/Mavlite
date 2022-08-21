@@ -44,19 +44,19 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
         print('using format:', _format)
         print('payload length:', len(payload), 'payload', *payload)
     payload = struct.unpack(_format, bytes(payload))
-  # Decode Order
-    if (message_id<=255):
+    # Decode Order
+    if message_id <= 255:
         tmpPayload = payload[:]
         for i in range(0, len(payload)):
-            payload[i] = tmpPayload[formats[message_id][2][i]]
+            payload[i] = tmpPayload[formats[message_id][2][i]]  # noqa
     return payload
-
 
 
 class X25crc:
     """
     Improved CRC code.
     """
+
     def __init__(self):
         self.crc = 0xffff
 
@@ -232,8 +232,8 @@ class Packet:
             print('payload malformed: expected', len(_format), 'arguments, received:', len(payload))
             raise ValueError
         _format = "<" + formats[message_id][0]
-          # Decode Order
-        if (message_id<=255):
+        # Decode Order
+        if message_id <= 255:
             tmpPayload = payload[:]
             for i in range(0, len(payload)):
                 payload[formats[message_id][2][i]] = tmpPayload[i]
@@ -364,6 +364,7 @@ class MavLink:
     """
     This is where it all comes together babah.
     """
+
     def __init__(self, message_ids: list, s_id: int = 0xff, c_id: int = 0xff):
         self.system_id = s_id
         self.component_id = c_id
@@ -465,7 +466,7 @@ async def test(_uart):
     m = MavLink([m_id])
     await uart_read(_uart, callback=crc_check, debug=True)
     await m.heartbeat_wait()
-    await m.send_message(0,[18,8,0,0,0,3],c_flags=0,i_flags=0,s_id=255,c_id=0)
+    await m.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
 
     await m.send_command(
         command_id=246,
