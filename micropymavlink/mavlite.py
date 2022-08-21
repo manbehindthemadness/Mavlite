@@ -425,20 +425,29 @@ class MavLink:
                             cmd = pl[2]  # Target command.
                             args = pl[4:]  # Get the seven arguments.
                             if cmd in self.callbacks.keys():
-                                callback = self.callbacks[cmd]
-                                ack_payload = await callback(*args)
-                                if len(ack_payload) != 3:
-                                    print('ERROR: callback results should have exactly three members, not', len(ack_payload))
-                                    raise ValueError
+
                                 prefix = [cmd]
                                 suffix = [p['system_id'], p['component_id']]
-                                ack_payload = prefix + ack_payload + suffix
+
+                                callback = self.callbacks[cmd]
+                                post = False
+                                if cmd == 246:  # Determine if we have been commanded to shut down.
+                                    post = True
+                                    ack_payload = prefix + [0, 0, 0] + suffix
+                                else:
+                                    ack_payload = await callback(*args)
+                                    if len(ack_payload) != 3:
+                                        print('ERROR: callback results should have exactly three members, not', len(ack_payload))
+                                        raise ValueError
+                                    ack_payload = prefix + ack_payload + suffix
                                 await self.send_message(  # Send command ACK.
                                     77,
                                     ack_payload,
                                     s_id=self.system_id,
                                     c_id=self.component_id
                                 )
+                                if post:  # If the command is shutdown/restart, execute after the ack has been sent.
+                                    await callback(*args)
                             elif debug:
                                 print('received command', cmd, 'without format definition')
                             del read_buffer[idx]
@@ -494,7 +503,6 @@ class MavLink:
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
-        # confirmation = 0  # TODO: This needs to increment for retry operations (see note in the ACK wait method).
         payload = [target_system, target_component, command_id, self.confirmation]
         payload.extend(list(params))
         await self.packet.create_packet(
@@ -508,7 +516,6 @@ class MavLink:
         result = await self.packet.send()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
             ack = await self.ack_wait(command_id, debug)  # noqa
-            # TODO: We need to look into these timeouts and figure out why heartbeat_wait works and this doesn't.
             if not ack and self.retries:
                 self.retries -= 1
                 self.confirmation += 1
