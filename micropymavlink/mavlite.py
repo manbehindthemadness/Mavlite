@@ -371,7 +371,8 @@ class MavLink:
 
                 On reception the command parser will:
 
-                shutdown_command_function(*command_parameters_seven_long)
+                ack_payload = shutdown_command_function(*command_parameters_seven_long)
+                send_ack(payload)
 
     """
     global TERM
@@ -421,7 +422,18 @@ class MavLink:
                             args = pl[4:]  # Get the seven arguments.
                             if cmd in self.callbacks.keys():
                                 callback = self.callbacks[cmd]
-                                return callback(*args)
+                                ack_payload = await callback(*args)
+                                if len(ack_payload) != 4:
+                                    print('ERROR: callback results should have exactly four members, not', len(ack_payload))
+                                    raise ValueError
+                                suffix = [p['system_id'], p['component_id']]
+                                ack_payload.extend(suffix)
+                                await self.send_message(  # Send command ACK.
+                                    77,
+                                    ack_payload,
+                                    s_id=self.system_id,
+                                    c_id=self.component_id
+                                )
                             elif debug:
                                 print('received command', cmd, 'without format definition')
                             del read_buffer[idx]
