@@ -605,21 +605,20 @@ class MavLink:
 
 async def test(_uart):
     """
-    Original reboot method:
-
-        def reboot_autopilot(self, hold_in_bootloader=False):
-        '''reboot the autopilot'''
-        if self.mavlink10():
-            if hold_in_bootloader:
-                param1 = 3
-            else:
-                param1 = 1
-            self.mav.command_long_send(self.target_system, self.target_component,
-               mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
-               param1, 0, 0, 0, 0, 0, 0)
+    This is a simple test method that sends and receives restart commands.
     """
+    async def reboot(*args):  # noqa
+        """
+        This is a simple example of an incoming command callback function.
+        """
+        # A real command should evaluate the 7 bytes of param data that will be passed as args.
+        import microcontroller  # noqa
+        microcontroller.reset()  # noqa
+        # Any other command would need to return status information.
+        # return 0, 0, 0
+
     m_id = 246
-    m = MavLink([m_id, 253])
+    m = MavLink([m_id, 253], callbacks={246: reboot})
 
     async def send():
         """Send test command"""
