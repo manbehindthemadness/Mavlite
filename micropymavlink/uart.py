@@ -159,7 +159,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                             print('--------------------')
                         try:
                             message_id = struct.unpack("H", bytes(p[7:9]))[0]
-                        except RuntimeError as err:
+                        except (RuntimeError, ValueError) as err:
                             print('Unable to unpack message_id', err, '\n', p[7:9])
                             break
                         pay_end = 10 + p[1]
