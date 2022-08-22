@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.uart &mdash; Mavlite 0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/styles.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/dark.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/light.css" type="text/css" />
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/script.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../contents.html" class="icon icon-home"> Mavlite
+            <img src="../../_static/mavlite.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../contents.html">Mavlite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../contents.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>src.uart</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.uart</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;# Write your code here :-)&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+
+
+<span class="n">magic</span> <span class="o">=</span> <span class="p">[</span><span class="mi">253</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="UART"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART">[docs]</a><span class="k">class</span> <span class="nc">UART</span><span class="p">:</span>
+    <span class="c1"># noinspection GrazieInspection</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wrapper class for machine.UART and busio.UART</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="kn">from</span> <span class="nn">machine</span> <span class="kn">import</span> <span class="n">UART</span> <span class="k">as</span> <span class="n">uart</span>  <span class="c1"># noqa</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="kn">from</span> <span class="nn">busio</span> <span class="kn">import</span> <span class="n">UART</span> <span class="k">as</span> <span class="n">uart</span>  <span class="c1"># noqa</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">s_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">baudrate</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">57600</span><span class="p">,</span>
+            <span class="n">bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+            <span class="n">parity</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">stop</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">rxbuf</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span>
+            <span class="n">tx</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">rx</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="p">(</span><span class="n">s_id</span><span class="p">,</span> <span class="n">baudrate</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">baudrate</span><span class="p">,</span> <span class="n">bits</span><span class="o">=</span><span class="n">bits</span><span class="p">,</span> <span class="n">parity</span><span class="o">=</span><span class="n">parity</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="n">tx</span><span class="o">=</span><span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">rx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uart</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="p">(</span>
+                <span class="n">tx</span><span class="p">,</span> <span class="n">rx</span><span class="p">,</span>
+                <span class="n">baudrate</span><span class="o">=</span><span class="n">baudrate</span><span class="p">,</span>
+                <span class="n">bits</span><span class="o">=</span><span class="n">bits</span><span class="p">,</span>
+                <span class="n">parity</span><span class="o">=</span><span class="n">parity</span><span class="p">,</span>
+                <span class="n">stop</span><span class="o">=</span><span class="n">stop</span><span class="p">,</span>
+                <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="n">receiver_buffer_size</span><span class="o">=</span><span class="n">rxbuf</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="UART.read"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.read">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_bytes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uart</span><span class="o">.</span><span class="n">read</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">Timeout</span> <span class="o">=</span> <span class="mi">3000</span>
+            <span class="k">while</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">Timeout</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">n_bytes</span><span class="p">)</span>
+                <span class="n">Timeout</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="n">result</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">n_bytes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UART.readinto"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.readinto">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">readinto</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uart</span><span class="o">.</span><span class="n">readinto</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Readinto wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">readinto</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UART.readline"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.readline">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">readline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uart</span><span class="o">.</span><span class="n">readline</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Readline wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="UART.write"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.write">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buf</span><span class="p">:</span> <span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">uart</span><span class="o">.</span><span class="n">write</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write wrapper</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+            <span class="n">buf</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UART.deinit"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.deinit">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">deinit</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">uart</span><span class="o">.</span><span class="n">deinit</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deinit wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">deinit</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="UART.setbaudrate"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.setbaudrate">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">setbaudrate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baudrate</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set baudrate wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">setbaudrate</span><span class="p">(</span><span class="n">baudrate</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">baudrate</span> <span class="o">=</span> <span class="n">baudrate</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span></div>
+
+<div class="viewcode-block" id="UART.any"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART.any">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">any</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Any wrapper.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mp</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uart</span><span class="o">.</span><span class="n">in_waiting</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;bytes waiting&#39;</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div></div>
+
+
+<span class="n">TERM</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">packets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">read_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">write_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+
+<span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">8</span>
+
+
+<div class="viewcode-block" id="uart_read"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.uart_read">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Uart packet listener.</span>
+
+<span class="sd">    TODO: In the future we will need to constrain this traffic to only broadcast packets and packets that are</span>
+<span class="sd">            addressed to us. This could overflow real fast with more than a few devices on the network.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">stream</span>
+    <span class="k">global</span> <span class="n">packets</span>
+    <span class="k">global</span> <span class="n">read_buffer</span>
+    <span class="n">partial_buff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_uart</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>  <span class="c1"># read up to 64 bytes</span>
+        <span class="n">skip</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">byte</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))):</span>
+                <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">byte</span><span class="p">]</span> <span class="ow">in</span> <span class="n">magic</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip</span><span class="p">:</span>  <span class="c1"># Check for start condition.</span>
+                    <span class="k">try</span><span class="p">:</span>  <span class="c1"># Don&#39;t check for another magic byte until after the end of this packet.</span>
+                        <span class="n">p_len</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                        <span class="n">min_length</span> <span class="o">=</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">p_len</span>
+                        <span class="c1"># TODO: We will need to add 13 bytes here if the communication is signed.</span>
+                        <span class="n">skip</span> <span class="o">=</span> <span class="n">min_length</span>
+                    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                        <span class="k">pass</span>
+                    <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>  <span class="c1"># If we have a large partial stored from the last read iteration, finish it.</span>
+                        <span class="n">stream</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
+                        <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">partial_buff</span><span class="p">:</span>  <span class="c1"># If the packets are smaller than the read buffer, handle them independently.</span>
+                        <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
+                    <span class="n">partial_buff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                    <span class="n">stream</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+                <span class="n">partial_buff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">byte</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">skip</span><span class="p">:</span>
+                    <span class="n">skip</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="n">stream</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packets</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">packets</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------------&#39;</span><span class="p">)</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">message_id</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">9</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Unable to unpack message_id&#39;</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">9</span><span class="p">])</span>
+                            <span class="k">break</span>
+                        <span class="n">pay_end</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="n">payload</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="n">pay_end</span><span class="p">]</span>
+                        <span class="k">try</span><span class="p">:</span>  <span class="c1"># Prevent a failure from snowballing into logic down the line.</span>
+                            <span class="n">crc</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">pay_end</span><span class="p">:</span><span class="n">pay_end</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="s1">&#39;unable to decode crc</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+                            <span class="k">break</span>  <span class="c1"># Prevent a failure from snowballing into logic down the line.</span>
+                        <span class="n">chk</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">pay_end</span><span class="p">]</span>
+
+                        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;start </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">, length </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">, incompat </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">, compat </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s1">, seq </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">, sys_id </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s1">, &#39;</span>
+                        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;comp_id </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s1">, mes_id </span><span class="si">{</span><span class="n">message_id</span><span class="si">}</span><span class="s1">, &#39;</span>
+                        <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;payload </span><span class="si">{</span><span class="n">payload</span><span class="si">}</span><span class="s1">, crc </span><span class="si">{</span><span class="n">crc</span><span class="si">}</span><span class="s1">, </span><span class="se">\n</span><span class="s1">raw </span><span class="si">{</span><span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="n">pack</span> <span class="o">=</span> <span class="p">{</span>
+                            <span class="s1">&#39;message_id&#39;</span><span class="p">:</span> <span class="n">message_id</span><span class="p">,</span>
+                            <span class="s1">&#39;system_id&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span>
+                            <span class="s1">&#39;component_id&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span>
+                            <span class="s1">&#39;payload&#39;</span><span class="p">:</span> <span class="n">payload</span><span class="p">,</span>
+                            <span class="s1">&#39;increment&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+                            <span class="s1">&#39;crc&#39;</span><span class="p">:</span> <span class="n">crc</span><span class="p">,</span>
+                            <span class="s1">&#39;chk&#39;</span><span class="p">:</span> <span class="n">chk</span><span class="p">,</span>
+                            <span class="s1">&#39;raw&#39;</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+                        <span class="p">}</span>
+                        <span class="k">if</span> <span class="n">callback</span><span class="p">:</span>  <span class="c1"># For CRC checking.</span>
+                            <span class="k">if</span> <span class="k">await</span> <span class="n">callback</span><span class="p">(</span><span class="n">pack</span><span class="p">,</span> <span class="n">debug</span><span class="p">):</span>
+                                <span class="n">read_buffer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pack</span><span class="p">)</span>
+                        <span class="n">read_buffer</span> <span class="o">=</span> <span class="n">read_buffer</span><span class="p">[</span><span class="o">-</span><span class="n">buffer_size</span><span class="p">:]</span>
+                    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;bad_data </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;receiving&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+                <span class="n">packets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">read_buffer</span></div>
+
+
+<div class="viewcode-block" id="uart_write"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.uart_write">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Writes our buffer to the device</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">write_buffer</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">write_buffer</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">packet</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">write_buffer</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span>
+                <span class="n">pay_end</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">+</span> <span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;start </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">, length </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">, incompat </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s1">, compat </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="si">}</span><span class="s1">, seq </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="si">}</span><span class="s1">, sys_id </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s1">, &#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;comp_id </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="si">}</span><span class="s1">, mes_id </span><span class="si">{</span><span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">9</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">, &#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;payload </span><span class="si">{</span><span class="n">p</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="n">pay_end</span><span class="p">]</span><span class="si">}</span><span class="s1">, crc </span><span class="si">{</span><span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="n">pay_end</span><span class="p">:</span><span class="n">pay_end</span> <span class="o">+</span> <span class="mi">2</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">raw </span><span class="si">{</span><span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------------</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;sending&#39;</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">_uart</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">bytes</span><span class="p">(</span><span class="n">packet</span><span class="p">))</span>
+
+            <span class="k">del</span> <span class="n">write_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;write buffer empty&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">write_buffer</span></div>
+
+
+<div class="viewcode-block" id="uart_io"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.uart_io">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">uart_io</span><span class="p">(</span><span class="n">_uart</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mainloop for this operation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">await</span> <span class="n">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">callback</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="test"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.test">[docs]</a><span class="k">def</span> <span class="nf">test</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run a test loop</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">board</span>  <span class="c1"># noqa</span>
+    <span class="kn">import</span> <span class="nn">asyncio</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">loop</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A while clause...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">115200</span><span class="p">)</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">await</span> <span class="n">uart_io</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+                <span class="k">break</span>
+
+    <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">loop</span><span class="p">())</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 Kevin Eales, Cameron Clark.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.mavlite module &mdash; Mavlite 0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/styles.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/light.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/script.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../contents.html" class="icon icon-home"> Mavlite
+            <img src="../_static/mavlite.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"><ul>
+<li><a class="reference internal" href="#">src.mavlite module</a></li>
+</ul>
+</div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../contents.html">Mavlite</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../contents.html" class="icon icon-home"></a> &raquo;</li>
+      <li>src.mavlite module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/src.mavlite.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-src.mavlite">
+<span id="src-mavlite-module"></span><h1>src.mavlite module<a class="headerlink" href="#module-src.mavlite" title="Permalink to this heading">¶</a></h1>
+<p>This file is an attempt to produce a bare-minimum Mavlink UART communication system.
+<a class="reference external" href="https://docs.python.org/3/library/struct.html">https://docs.python.org/3/library/struct.html</a></p>
+<dl class="simple">
+<dt>TypesList = {</dt><dd><p>“float”:”f”,
+“double”:”d”,
+“char”:”s”,
+“int8_t”:”b”,
+“int16_t”:”h”,
+“int32_t”:”l”,
+“int64_t”:”q”,
+“uint8_t”:”B”,
+“uint16_t”:”H”,
+“uint32_t”:”I”,
+“uint64_t”:”Q”
+}</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="src.mavlite.Command">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">Command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This will allow us to send commands and read the ACK.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Command.packet">
+<span class="sig-name descname"><span class="pre">packet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;src.mavlite.Packet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#src.mavlite.Command.packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Command.wait">
+<em class="property"><span class="pre">async</span><span class="w"> </span><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cmd_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Command.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Command.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will wait for our command ACK response.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.mavlite.Heartbeat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">Heartbeat</span></span><a class="reference internal" href="../_modules/src/mavlite.html#Heartbeat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Send a heartbeat packet.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Heartbeat.packet">
+<span class="sig-name descname"><span class="pre">packet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;src.mavlite.Packet</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#src.mavlite.Heartbeat.packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Heartbeat.wait">
+<em class="property"><span class="pre">async</span><span class="w"> </span><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="k"><span class="pre">True</span></span></span></span><a class="reference internal" href="../_modules/src/mavlite.html#Heartbeat.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Heartbeat.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Waits for a heartbeat.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.mavlite.MavLink">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">MavLink</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message_ids</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">255</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">255</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">retries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">{}</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This is where it all comes together babah.</p>
+<p>NOTE: When using callbacks for incoming command executions ensure they accept 7 arguments for the params:</p>
+<p>callbacks = {
+246: shutdown_command_function,
+&lt;id&gt;: &lt;command&gt;
+}</p>
+<p>On reception the command parser will:</p>
+<p>ack_payload = shutdown_command_function(command_parameters_seven_long)</p>
+<p>send_ack(payload)</p>
+<p>ack_payload body:</p>
+<p>[&lt;result&gt;, &lt;progress&gt;, &lt;result_param2&gt;]</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.ack_wait">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">ack_wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.ack_wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.ack_wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will wait for a command ACK up to a specific timeout.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.command_parser">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">command_parser</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.command_parser"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.command_parser" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will collect incoming commands and fire off their respective callbacks.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.confirmation">
+<span class="sig-name descname"><span class="pre">confirmation</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.MavLink.confirmation" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.heartbeat_wait">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">heartbeat_wait</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.heartbeat_wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.heartbeat_wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wait for heartbeat packet.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.io_buffers">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">io_buffers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uart</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.io_buffers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.io_buffers" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will return the tasks required to handle UART I/O via our read and write buffers.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.receive">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">receive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.receive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.receive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from the incoming buffer… We need to break this out into receive_message and receive_command.</p>
+<p>decode COMMAND_ACK: struct.unpack(“&lt;HBBiBB”, bytes(payload))</p>
+<div class="line-block">
+<div class="line">command | result | progress | result_param2 | target_system | target_component |</div>
+</div>
+<p><a class="reference external" href="https://mavlink.io/en/messages/common.html#MAV_RESULT">https://mavlink.io/en/messages/common.html#MAV_RESULT</a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.send_command">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">command_id:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_system:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_component:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params:</span> <span class="pre">(&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;)</span> <span class="pre">=</span> <span class="pre">(0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.mavlite.Packet" title="src.mavlite.Packet"><span class="pre">Packet</span></a></span></span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.send_command"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.send_command" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a command with a 7 byte payload and wait for ACK.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.send_message">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">m_id:</span> <span class="pre">int,</span> <span class="pre">payload:</span> <span class="pre">[&lt;class</span> <span class="pre">'list'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'tuple'&gt;],</span> <span class="pre">c_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">i_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">s_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">c_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#src.mavlite.Packet" title="src.mavlite.Packet"><span class="pre">Packet</span></a></span></span><a class="reference internal" href="../_modules/src/mavlite.html#MavLink.send_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.MavLink.send_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Formats an outgoing message into a Mavlink packet.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.MavLink.term">
+<span class="sig-name descname"><span class="pre">term</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#src.mavlite.MavLink.term" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.mavlite.Packet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">Packet</span></span><a class="reference internal" href="../_modules/src/mavlite.html#Packet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Construct/deconstruct Mavlink packets.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.assemble">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assemble</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.assemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.assemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assembles a packet for transmission.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.cid">
+<span class="sig-name descname"><span class="pre">cid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#src.mavlite.Packet.cid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.compat">
+<span class="sig-name descname"><span class="pre">compat</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.compat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.crc">
+<span class="sig-name descname"><span class="pre">crc</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">65535</span></em><a class="headerlink" href="#src.mavlite.Packet.crc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.crc_extra">
+<span class="sig-name descname"><span class="pre">crc_extra</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.crc_extra" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.create_header">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_header</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.create_header"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.create_header" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs a mavlink 2 header.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.create_packet">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_packet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">m_id:</span> <span class="pre">int,</span> <span class="pre">payload:</span> <span class="pre">[&lt;class</span> <span class="pre">'list'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'tuple'&gt;],</span> <span class="pre">c_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">i_flags:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0,</span> <span class="pre">s_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">c_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bytes</span></span></span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.create_packet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.create_packet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a finished mavlink packet that is ready for transmission.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.create_payload">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.create_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.create_payload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pack the user payload according to the specified format.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.header">
+<span class="sig-name descname"><span class="pre">header</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">b''</span></em><a class="headerlink" href="#src.mavlite.Packet.header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.incompat">
+<span class="sig-name descname"><span class="pre">incompat</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.incompat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.magic">
+<span class="sig-name descname"><span class="pre">magic</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">253</span></em><a class="headerlink" href="#src.mavlite.Packet.magic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.mid">
+<span class="sig-name descname"><span class="pre">mid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.mid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.next_payload">
+<span class="sig-name descname"><span class="pre">next_payload</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bytes</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">b''</span></em><a class="headerlink" href="#src.mavlite.Packet.next_payload" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.p_len">
+<span class="sig-name descname"><span class="pre">p_len</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.p_len" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.packet">
+<span class="sig-name descname"><span class="pre">packet</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#src.mavlite.Packet.packet" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.payload">
+<span class="sig-name descname"><span class="pre">payload</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bytes</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">b''</span></em><a class="headerlink" href="#src.mavlite.Packet.payload" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.psn">
+<span class="sig-name descname"><span class="pre">psn</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.psn" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.receive">
+<em class="property"><span class="pre">async</span><span class="w"> </span><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">receive</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.receive"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.receive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Just returns the read buffer.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.reset">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">reset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.reset"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear all variables to save memory.
+Also increment the PSN.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.send">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.send"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will transmit our shiny new packet.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.sid">
+<span class="sig-name descname"><span class="pre">sid</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1</span></em><a class="headerlink" href="#src.mavlite.Packet.sid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.sig">
+<span class="sig-name descname"><span class="pre">sig</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">0</span></em><a class="headerlink" href="#src.mavlite.Packet.sig" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.Packet.truncate">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">truncate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#Packet.truncate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.Packet.truncate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Strip nullbytes from payload.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="src.mavlite.Packet.x25">
+<span class="sig-name descname"><span class="pre">x25</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&lt;src.mavlite.X25crc</span> <span class="pre">object&gt;</span></em><a class="headerlink" href="#src.mavlite.Packet.x25" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="src.mavlite.X25crc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">X25crc</span></span><a class="reference internal" href="../_modules/src/mavlite.html#X25crc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.X25crc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Improved CRC code.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.X25crc.accumulate">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accumulate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#X25crc.accumulate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.X25crc.accumulate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add in rolling byte-chunks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.X25crc.accumulate_str">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">accumulate_str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">buf:</span> <span class="pre">[&lt;class</span> <span class="pre">'str'&gt;,</span> <span class="pre">&lt;class</span> <span class="pre">'bytes'&gt;]</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#X25crc.accumulate_str"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.X25crc.accumulate_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add in rolling byte-chunks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.mavlite.X25crc.create">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">buf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#X25crc.create"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.X25crc.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform CRC creation actions independent of class init.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.mavlite.crc_check">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">crc_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pack</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/src/mavlite.html#crc_check"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.crc_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>CRC Checking callback.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.mavlite.decode_payload">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">decode_payload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message_id:</span> <span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload:</span> <span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_override:</span> <span class="pre">[None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'str'&gt;]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#decode_payload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.decode_payload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses the indexed format to decode the contents of an incoming payload.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.mavlite.test">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.mavlite.</span></span><span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_uart</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/mavlite.html#test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.mavlite.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a simple test method that sends and receives restart commands.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 Kevin Eales, Cameron Clarke.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
