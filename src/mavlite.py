@@ -24,8 +24,8 @@ try:
     import asyncio
 except ImportError:
     import uasyncio as asyncio  # noqa
-from micropymavlink.MSGFormats import formats
-from micropymavlink.uart import (
+from src.MSGFormats import formats
+from src.uart import (
     uart_read,
     uart_write,
     # read_buffer,
@@ -364,19 +364,21 @@ class MavLink:
     This is where it all comes together babah.
 
     NOTE: When using callbacks for incoming command executions ensure they accept 7 arguments for the params:
-                callbacks = {
-                    246: shutdown_command_function,
-                    <id>: <command>
-                }
 
-                On reception the command parser will:
+    callbacks = {
+    246: shutdown_command_function,
+    <id>: <command>
+    }
 
-                ack_payload = shutdown_command_function(*command_parameters_seven_long)
-                send_ack(payload)
+    On reception the command parser will:
 
-                ack_payload body:
+    ack_payload = shutdown_command_function(command_parameters_seven_long)
 
-                [<result>, <progress>, <result_param2>]
+    send_ack(payload)
+
+    ack_payload body:
+
+    [<result>, <progress>, <result_param2>]
 
     """
     global TERM

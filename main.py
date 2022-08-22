@@ -6,8 +6,8 @@ try:
     import asyncio
 except ImportError:
     import uasyncio as asyncio  # noqa
-from micropymavlink.mavlite import test
-from micropymavlink.uart import UART
+from src.mavlite import test
+from src.uart import UART
 
 
 try:

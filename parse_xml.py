@@ -702,7 +702,7 @@ for name in fileNames:
         print(Orders)
         ItemDict[message.id] = (Format, Loaded.message_crcs[message.id], Orders if message.id <= 255 else [])
 
-destination = here / 'micropymavlink/MSGFormats.py'
+destination = here / 'src/MSGFormats.py'
 
 f = open(destination, "w")
 f.write("formats = ")
