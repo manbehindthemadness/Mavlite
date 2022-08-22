@@ -310,7 +310,7 @@ class Heartbeat:
         self.type = None
 
     @staticmethod
-    async def wait() -> True:
+    async def wait(debug: bool = False) -> True:
         """
         Waits for a heartbeat.
         """
@@ -323,10 +323,12 @@ class Heartbeat:
                 if message['message_id'] == 0:
                     hold = message['increment']
                     del read_buffer[idx]
+                    if debug:
+                        print('\n\n\n\nfound heartbeat **************************************************************************\n\n\n\n')
             if hold:
                 beat = hold
             if timeout < now:
-                print('warning heartbeat timed out')
+                print('\n\n\n\nwarning heartbeat timed out **************************************************************************\n\n\n\n')
                 break
             await asyncio.sleep(0.001)
         return beat
@@ -391,6 +393,8 @@ class MavLink:
     """
     global TERM
     term = TERM
+
+    ack = None
 
     confirmation = 0
 
@@ -462,11 +466,11 @@ class MavLink:
                                 print('received command', cmd, 'without format definition')
                             del read_buffer[idx]
 
-    async def heartbeat_wait(self):
+    async def heartbeat_wait(self, debug: bool = False):
         """
         Wait for heartbeat packet.
         """
-        result = await self.heartbeat.wait()  # noqa
+        result = await self.heartbeat.wait(debug)  # noqa
         return result
 
     async def ack_wait(self, command_id: int, debug: bool = False):
@@ -478,18 +482,19 @@ class MavLink:
 
     async def send_message(
             self,
-            m_id: int,
+            message_id: int,
             payload: [list, tuple],
             c_flags: int = 0x00,
             i_flags: int = 0x00,
             s_id: int = 0x01,
             c_id: int = 0x01,
+            debug: bool = False
     ) -> Packet:
         """
         Formats an outgoing message into a Mavlink packet.
         """
         await self.packet.create_packet(
-            m_id,
+            message_id,
             payload,
             c_flags,
             i_flags,
@@ -525,8 +530,8 @@ class MavLink:
         )
         result = await self.packet.send()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
-            ack = await self.ack_wait(command_id, debug)  # noqa
-            if not ack and self.retries:
+            self.ack = await self.ack_wait(command_id, debug)  # noqa
+            if not self.ack and self.retries:
                 self.retries -= 1
                 self.confirmation += 1
                 await self.send_command(
@@ -545,6 +550,7 @@ class MavLink:
 
             self.retries = 10
             self.confirmation = 0
+            self.ack = None
         return result
 
     async def receive(self):
@@ -632,7 +638,7 @@ async def test(_uart):
 
     async def send():
         """Send test command"""
-        await m.heartbeat_wait()
+        await m.heartbeat_wait(True)
         await m.send_command(
             command_id=246,
             target_system=0,
@@ -644,8 +650,7 @@ async def test(_uart):
             c_id=1,
             debug=True
         )
-        print('\n-----------------------------test complete: **laughs in MavLink**-----------------------------------')
-        m.__exit__()
+        print('\n\n\n\n----------------------------- IF YOU SEE THIS THERE HAS BEEN AN ERROR -----------------------------------\n\n\n\n')
 
     async def main(uart_):
         """
