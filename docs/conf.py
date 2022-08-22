@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../src/'))
 
 project = 'Mavlite'
-copyright = '2022 Kevin Eales, Cameron Clarke'
+copyright = '2022 Kevin Eales, Cameron Clarke'  # noqa
 author = 'Kevin Eales, Cameron Clarke'
 
 version = '0.1'

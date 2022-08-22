@@ -19,19 +19,26 @@ TypesList = {
 import gc
 import array
 import struct
-from time import monotonic_ns
+from time import monotonic
 try:
     import asyncio
 except ImportError:
     import uasyncio as asyncio  # noqa
-from src.MSGFormats import formats
-from src.uart import (
-    uart_read,
-    uart_write,
-    # read_buffer,
-    write_buffer,
-)
 
+try:
+    from MSGFormats import formats
+    from uart import (
+        uart_read,
+        uart_write,
+        write_buffer,
+    )
+except ImportError:
+    from .MSGFormats import formats
+    from .uart import (
+        uart_read,
+        uart_write,
+        write_buffer,
+    )
 
 TERM = False
 read_buffer = list()
@@ -309,9 +316,9 @@ class Heartbeat:
         """
         beat = False
         hold = False
-        now = monotonic_ns()
-        timeout = now + 1000000000
-        while not beat and timeout < 3000 and not TERM:
+        now = monotonic()
+        timeout = now + 1
+        while not beat and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 0:
                     hold = message['increment']
@@ -320,6 +327,7 @@ class Heartbeat:
                 beat = hold
             if timeout < now:
                 print('warning heartbeat timed out')
+                break
             await asyncio.sleep(0.001)
         return beat
 
@@ -342,8 +350,8 @@ class Command:
         """
         global read_buffer
         ack = False
-        now = monotonic_ns()
-        timeout = now + 1000000000
+        now = monotonic()
+        timeout = now + 1
         while not ack and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
