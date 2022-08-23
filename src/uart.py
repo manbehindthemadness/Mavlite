@@ -1,6 +1,9 @@
 """# Write your code here :-)"""
 import struct
-
+try:
+    import asyncio
+except ImportError:
+    import uasyncio as asyncio  # noqa
 
 magic = [253]
 
@@ -24,7 +27,7 @@ class UART:
             bits: int = 8,
             parity: [None, int] = None,
             stop: int = 1,
-            timeout: int = 1,
+            timeout: int = 0,
             rxbuf: int = 64,
             tx: any = None,
             rx: any = None
@@ -53,6 +56,7 @@ class UART:
             while result is None and Timeout:
                 result = self.uart.read(n_bytes)
                 Timeout += 1
+                await asyncio.sleep(0.0002)
             return result
         else:
             return self.uart.read(n_bytes)
@@ -148,6 +152,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                 partial_buff.append(data[byte])
                 if skip:
                     skip -= 1
+                await asyncio.sleep(0.0015)
             stream.extend(partial_buff)
             if len(packets):
                 for idx, p in enumerate(packets):
@@ -196,7 +201,10 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                         del packets[idx]  # Clear memory.
                     if debug:
                         print('--------------------\n', 'receiving', msg)
+                    await asyncio.sleep(0.002)
                 packets = list()
+    else:
+        await asyncio.sleep(0.001)
     return read_buffer
 
 
@@ -216,8 +224,10 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg += f'\nraw {bytes(p)}'
                 print('--------------------\n', 'sending', msg)
             await _uart.write(bytes(packet))
-
             del write_buffer[idx]
+            await asyncio.sleep(0.0017)
+    else:
+        await asyncio.sleep(0.023)
     return write_buffer
 
 
@@ -246,5 +256,6 @@ def test():
                 await uart_io(_uart, True)
             except KeyboardInterrupt:
                 break
+            await asyncio.sleep(0.00014)
 
     asyncio.run(loop())

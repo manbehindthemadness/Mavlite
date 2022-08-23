@@ -66,6 +66,7 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
         tmpPayload = payload[:]
         for i in range(0, len(payload)):
             payload[i] = tmpPayload[formats[message_id][2][i]]  # noqa
+            await asyncio.sleep(0.00021)
     return payload
 
 
@@ -98,6 +99,7 @@ class X25crc:
             tmp = b ^ (accum & 0xff)
             tmp = (tmp ^ (tmp << 4)) & 0xFF
             accum = (accum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)
+            await asyncio.sleep(0.0001)
         self.crc = accum
         return self
 
@@ -223,6 +225,7 @@ class Packet:
         self.p_len = len(self.payload)
         while self.p_len > 1 and self.payload[self.p_len - 1] == 0:
             self.p_len -= 1
+            await asyncio.sleep(0.0001)
         self.payload = self.payload[:self.p_len]
         return self
 
@@ -232,7 +235,7 @@ class Packet:
         """
         await self.create_payload(self.mid, self.payload)
         await self.create_header()
-        self.packet = self.header + self.payload
+        self.packet = bytes(self.header) + bytes(self.payload)
         await self.x25.create(self.packet[1:])
         self.crc_extra = formats[self.mid][1]
         await self.x25.accumulate_str(struct.pack("B", self.crc_extra))  # noqa
@@ -254,6 +257,7 @@ class Packet:
             tmpPayload = payload[:]
             for i in range(0, len(payload)):
                 payload[formats[message_id][2][i]] = tmpPayload[i]
+                await asyncio.sleep(0.00017)
         self.payload = struct.pack(_format, *payload)
         await self.truncate()
         self.p_len = len(list(self.payload))
@@ -325,12 +329,13 @@ class Heartbeat:
                     del read_buffer[idx]
                     if debug:
                         print('\n\n\n\nfound heartbeat **************************************************************************\n\n\n\n')
+                await asyncio.sleep(0.00013)
             if hold:
                 beat = hold
             if timeout < now:
                 print('\n\n\n\nwarning heartbeat timed out **************************************************************************\n\n\n\n')
                 break
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.0013)
         return beat
 
 
@@ -362,10 +367,11 @@ class Command:
                         if debug:
                             print('\n\n\n\nfound ACK **************************************************************************\n\n\n\n')
                         break
+                await asyncio.sleep(0.00016)
             if timeout < now:
                 if debug:
                     print('\n\n\n\nwarning ACK timed out **************************************************************************\n\n\n\n')
-            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.0011)
         return ack
 
 
@@ -465,6 +471,7 @@ class MavLink:
                             elif debug:
                                 print('received command', cmd, 'without format definition')
                             del read_buffer[idx]
+            await asyncio.sleep(0.00018)
 
     async def heartbeat_wait(self, debug: bool = False):
         """
@@ -569,8 +576,11 @@ class MavLink:
         """
         This will return the tasks required to handle UART I/O via our read and write buffers.
         """
+        parent = self
+        _uart = uart
+        _debug = debug
 
-        async def read_loop(parent: any, _uart: any, _debug: bool):
+        async def read_loop():
             """
             Read buffer loop.
             """
@@ -578,37 +588,42 @@ class MavLink:
             global TERM
             while not TERM:
                 read_buffer = await uart_read(_uart, crc_check, _debug)
-                await parent.command_parser(_debug)
-                gc.collect()
                 if _debug:
-                    print('\nmemory allocation:', gc.mem_alloc(), '\n')  # noqa
-                await asyncio.sleep(0.0001)
+                    gc.collect()
+                    # print('\nmemory allocation:', gc.mem_alloc(), '\n')  # noqa
 
-        async def write_loop(_uart: any, _debug: bool):
+        async def write_loop():
             """
             Write loop.
             """
             global TERM
             while not TERM:
                 await uart_write(_uart, _debug)
-                await asyncio.sleep(0.0001)
 
-        async def heartbeat_loop(parent, _uart: any, _debug: bool):
+        async def heartbeat_loop():
             """
             Let's send some heartbeat packets.
             """
             global TERM
             while not TERM:
                 await parent.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # TODO: see if this is slowing us down
 
-        return asyncio.create_task(
-            read_loop(self, uart, debug)
-        ), asyncio.create_task(
-            write_loop(uart, debug)
-        ), asyncio.create_task(
-            heartbeat_loop(self, uart, debug)
-        )
+        async def command_loop():
+            """
+            Listen for incoming commands.
+            """
+            global TERM
+            while not TERM:
+                await parent.command_parser(_debug)
+
+        result = [
+            write_loop(),
+            read_loop(),
+            heartbeat_loop(),
+            command_loop()
+        ]
+        return result
 
     def __exit__(self, *args):
         """
