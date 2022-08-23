@@ -495,20 +495,23 @@ class MavLink:
             i_flags: int = 0x00,
             s_id: int = 0x01,
             c_id: int = 0x01,
-            debug: bool = False
+            debug: bool = False  # noqa
     ) -> Packet:
         """
         Formats an outgoing message into a Mavlink packet.
         """
-        await self.packet.create_packet(
-            message_id,
-            payload,
-            c_flags,
-            i_flags,
-            s_id,
-            c_id
-        )
-        return await self.packet.send()
+        try:
+            await self.packet.create_packet(
+                message_id,
+                payload,
+                c_flags,
+                i_flags,
+                s_id,
+                c_id
+            )
+            return await self.packet.send()
+        except KeyError as err:
+            print(err, '\nUnable to locate command ID, please check includes and definitions')
 
     async def send_command(
             self,
@@ -607,7 +610,7 @@ class MavLink:
             global TERM
             while not TERM:
                 await parent.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
-                await asyncio.sleep(1)  # TODO: see if this is slowing us down
+                await asyncio.sleep(1)
 
         async def command_loop():
             """
