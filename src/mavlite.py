@@ -410,8 +410,10 @@ class MavLink:
             s_id: int = 0xff,
             c_id: int = 0xff,
             retries: int = 10,
-            callbacks: dict = dict()  # noqa
+            callbacks: dict = dict(),  # noqa
+            heartbeat_payload: list = [18, 8, 0, 0, 0, 3]  # noqa
     ):
+        self.heartbeat_payload = heartbeat_payload
         self.system_id = s_id
         self.component_id = c_id
         if callbacks:  # Add any definitions for incoming commands.
@@ -609,7 +611,7 @@ class MavLink:
             """
             global TERM
             while not TERM:
-                await parent.send_message(0, [18, 8, 0, 0, 0, 3], c_flags=0, i_flags=0, s_id=255, c_id=0)
+                await parent.send_message(0, self.heartbeat_payload, c_flags=0, i_flags=0, s_id=self.system_id, c_id=self.component_id)
                 await asyncio.sleep(1)
 
         async def command_loop():
