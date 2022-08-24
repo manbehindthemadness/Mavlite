@@ -123,6 +123,10 @@ buffer_size = 8
 async def uart_read(_uart: any = None, callback: any = None, debug: bool = False) -> list:
     """
     Uart packet listener.
+
+    TODO: This needs to take into account message includes so we don't spend all this processing time decoding every
+            packet.
+
     """
     global stream
     global packets

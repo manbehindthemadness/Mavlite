@@ -43,6 +43,14 @@ except ImportError:
 TERM = False
 read_buffer = list()
 
+defs = {
+    'sid': 1,
+    'cid': 158,
+    'cfl': 0,
+    'ifl': 0
+
+}
+
 
 async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
     """
@@ -258,7 +266,11 @@ class Packet:
             for i in range(0, len(payload)):
                 payload[formats[message_id][2][i]] = tmpPayload[i]
                 await asyncio.sleep(0.00017)
-        self.payload = struct.pack(_format, *payload)
+        try:
+            self.payload = struct.pack(_format, *payload)
+        except OverflowError as err:
+            print('Unable to pack payload\n', _format, payload)
+            raise err
         await self.truncate()
         self.p_len = len(list(self.payload))
         return self
@@ -407,8 +419,10 @@ class MavLink:
     def __init__(
             self,
             message_ids: list,
-            s_id: int = 0xff,
-            c_id: int = 0xff,
+            s_id: int = defs['sid'],
+            c_id: int = defs['cid'],
+            c_flags: int = defs['cfl'],
+            i_flags: int = defs['ifl'],
             retries: int = 10,
             callbacks: dict = dict(),  # noqa
             heartbeat_payload: list = [18, 8, 0, 0, 0, 3]  # noqa
@@ -416,6 +430,8 @@ class MavLink:
         self.heartbeat_payload = heartbeat_payload
         self.system_id = s_id
         self.component_id = c_id
+        self.compatibility_flags = c_flags
+        self.incompatibility_flags = i_flags
         if callbacks:  # Add any definitions for incoming commands.
             command_ids = list(callbacks.keys())
             message_ids.extend(command_ids)
@@ -493,10 +509,10 @@ class MavLink:
             self,
             message_id: int,
             payload: [list, tuple],
-            c_flags: int = 0x00,
-            i_flags: int = 0x00,
-            s_id: int = 0x01,
-            c_id: int = 0x01,
+            s_id: int = defs['sid'],
+            c_id: int = defs['cid'],
+            c_flags: int = defs['cfl'],
+            i_flags: int = defs['ifl'],
             debug: bool = False  # noqa
     ) -> Packet:
         """
@@ -521,10 +537,10 @@ class MavLink:
             target_system: int = 0x01,
             target_component: int = 0x01,
             params: (int, int, int, int, int, int, int) = (0, 0, 0, 0, 0, 0, 0),
-            c_flags: int = 0x00,
-            i_flags: int = 0x00,
-            s_id: int = 0x01,
-            c_id: int = 0x01,
+            s_id: int = defs['sid'],
+            c_id: int = defs['cid'],
+            c_flags: int = defs['cfl'],
+            i_flags: int = defs['ifl'],
             debug: bool = False
     ) -> Packet:
         """
@@ -593,9 +609,7 @@ class MavLink:
             global TERM
             while not TERM:
                 read_buffer = await uart_read(_uart, crc_check, _debug)
-                if _debug:
-                    gc.collect()
-                    # print('\nmemory allocation:', gc.mem_alloc(), '\n')  # noqa
+                gc.collect()
 
         async def write_loop():
             """
@@ -664,10 +678,6 @@ async def test(_uart):
             target_system=0,
             target_component=0,
             params=[1, 0, 0, 0, 0, 0, 0],
-            c_flags=0,
-            i_flags=0,
-            s_id=1,  # Revised this so, we can get ACK packets that are addressed to us.
-            c_id=1,
             debug=True
         )
         print('\n\n\n\n----------------------------- IF YOU SEE THIS THERE HAS BEEN AN ERROR -----------------------------------\n\n\n\n')
