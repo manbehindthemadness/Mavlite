@@ -31,6 +31,7 @@ try:
         uart_read,
         uart_write,
         write_buffer,
+        UART
     )
 except ImportError:
     from .MSGFormats import formats
@@ -38,6 +39,7 @@ except ImportError:
         uart_read,
         uart_write,
         write_buffer,
+        UART
     )
 
 TERM = False

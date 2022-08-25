@@ -1,5 +1,14 @@
 """
 An init file...yay
 """
-import MSGFormats
-import uart
+
+try:
+    from mavlite import (
+        MavLink,
+        UART
+    )
+except ImportError:
+    from .mavlite import (
+        MavLink,
+        UART
+    )
