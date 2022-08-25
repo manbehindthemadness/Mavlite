@@ -40,9 +40,6 @@ exclude_patterns = [
     'Thumbs.db',
     '.DS_Store',
     '*_cffi_backend*',
-    # "source/modules.rst",
-    # "source/src.rst",
-    # "source/src.main.rst"
 ]
 pygments_style = 'sphinx'
 todo_include_todos = True

@@ -45,17 +45,24 @@
               <!-- Local TOC -->
               <div class="local-toc"><ul>
 <li><a class="reference internal" href="#">About</a></li>
-<li><a class="reference internal" href="#system-requirements">System requirements</a></li>
+<li><a class="reference internal" href="#system-requirements">System requirements</a><ul>
+<li><a class="reference internal" href="#tested-hardware">Tested hardware</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#prerequisites">Prerequisites</a><ul>
-<li><a class="reference internal" href="#general">General</a></li>
+<li><a class="reference internal" href="#micropython">micropython</a></li>
+<li><a class="reference internal" href="#circuitpython">circuitpython</a></li>
+<li><a class="reference internal" href="#examples">examples</a></li>
+<li><a class="reference internal" href="#documentation">documentation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#usage">Usage</a><ul>
-<li><a class="reference internal" href="#id1">General</a></li>
-<li><a class="reference internal" href="#examples">Examples</a></li>
+<li><a class="reference internal" href="#general">General</a></li>
+<li><a class="reference internal" href="#id1">Examples</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#links">Links</a></li>
+<li><a class="reference internal" href="#notes">Notes</a></li>
 <li><a class="reference internal" href="#indices-and-tables">Indices and tables</a></li>
 </ul>
 </div>
@@ -83,7 +90,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <img alt="_images/mavlite_git.png" src="_images/mavlite_git.png" />
+  <img alt="_static/mavlite_sphinx.png" src="_static/mavlite_sphinx.png" />
 <div class="toctree-wrapper compound">
 </div>
 <section id="about">
@@ -92,24 +99,101 @@
 </section>
 <section id="system-requirements">
 <h1>System requirements<a class="headerlink" href="#system-requirements" title="Permalink to this heading">¶</a></h1>
-<p>Statement about size and memory usage here.</p>
+<p>As of the time of this writing Mavlink uses roughly 45kb of flash and as little as 30kb of memory.
+<em>Note: memory consumption is subject to change based on the number of message includes that are in use.</em></p>
+<section id="tested-hardware">
+<h2>Tested hardware<a class="headerlink" href="#tested-hardware" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>XIAO rp2040</p></li>
+<li><p>ESP32 Standard</p></li>
+</ul>
+</section>
 </section>
 <section id="prerequisites">
 <h1>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this heading">¶</a></h1>
-<section id="general">
-<h2>General<a class="headerlink" href="#general" title="Permalink to this heading">¶</a></h2>
+<section id="micropython">
+<h2>micropython<a class="headerlink" href="#micropython" title="Permalink to this heading">¶</a></h2>
 <ul class="simple">
-<li><p>statement here</p></li>
+<li><dl class="simple">
+<dt>uasyncio</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/peterhinch/micropython-async">https://github.com/peterhinch/micropython-async</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="circuitpython">
+<h2>circuitpython<a class="headerlink" href="#circuitpython" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>busio</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/adafruit/Adafruit_BusIO">https://github.com/adafruit/Adafruit_BusIO</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>board</dt><dd><ul>
+<li><p><a class="reference external" href="https://docs.circuitpython.org/en/latest/shared-bindings/support_matrix.html">https://docs.circuitpython.org/en/latest/shared-bindings/support_matrix.html</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>asyncio</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/adafruit/Adafruit_CircuitPython_asyncio">https://github.com/adafruit/Adafruit_CircuitPython_asyncio</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="examples">
+<h2>examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><dl class="simple">
+<dt>adafruit_tca9548a</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/adafruit/Adafruit_CircuitPython_TCA9548A">https://github.com/adafruit/Adafruit_CircuitPython_TCA9548A</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>adafruit_vl53l1x</dt><dd><ul>
+<li><p><a class="reference external" href="https://github.com/adafruit/Adafruit_CircuitPython_VL53L1X">https://github.com/adafruit/Adafruit_CircuitPython_VL53L1X</a></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<section id="documentation">
+<h2>documentation<a class="headerlink" href="#documentation" title="Permalink to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>sphinx&gt;=2.4</p></li>
+<li><p>sphinx-copybutton</p></li>
+<li><p>sphinx-issues&gt;=3.0.1</p></li>
+<li><p>sphinx-removed-in</p></li>
+<li><p>sphinx-rtd-theme&gt;=1.0</p></li>
+<li><p>sphinxext-opengraph</p></li>
 </ul>
 </section>
 </section>
 <section id="usage">
 <h1>Usage<a class="headerlink" href="#usage" title="Permalink to this heading">¶</a></h1>
-<section id="id1">
-<h2>General<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<section id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this heading">¶</a></h2>
+<p><strong>Message includes</strong></p>
+<p><strong>Task loops</strong></p>
+<p><strong>Command syntax</strong></p>
+<p><strong>Heartbeats</strong></p>
 </section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">¶</a></h2>
+<section id="id1">
+<h2>Examples<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
+<p><strong>Restart flight controller</strong></p>
+<p><strong>Rangefinder</strong></p>
+<p><strong>I2C Multiplexor</strong></p>
 </section>
 </section>
 <section id="links">
@@ -118,6 +202,11 @@
 <a class="reference external" href="https://mavlink.io/en/messages/common.html">https://mavlink.io/en/messages/common.html</a> <br>
 <a class="reference external" href="https://mavlink.io/en/messages/ardupilotmega.html">https://mavlink.io/en/messages/ardupilotmega.html</a> <br>
 <a class="reference external" href="https://ardupilot.org/dev/docs/mavlink-commands.html">https://ardupilot.org/dev/docs/mavlink-commands.html</a> <br></p>
+</section>
+<section id="notes">
+<h1>Notes<a class="headerlink" href="#notes" title="Permalink to this heading">¶</a></h1>
+<p><strong>Known issues</strong></p>
+<p><strong>Future plans</strong></p>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
