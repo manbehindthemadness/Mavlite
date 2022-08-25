@@ -223,14 +223,378 @@ The command callback will be executed when the specified command is received by 
 </pre></div>
 </div>
 <p><strong>Task loops</strong></p>
+<p>Selective task loops can be called from <code class="docutils literal notranslate"><span class="pre">mavlite.Mavlink.io_buffers</span></code> This returns a tuple of asynchronous functions
+that can be fed directly into tasks:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">write</span> <span class="pre">loop</span></code> Provides outgoing packet transmission buffer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">read_loop</span></code> Provides incoming packet reception buffer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">heartbeat_loop</span></code> Sends a heartbeat packet at 1hz into the write buffer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">command_listener</span></code> Checks the read buffer for specific commands and executes their respective callback functions</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span><span class="p">,</span> <span class="n">UART</span>
+
+<span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+
+<span class="n">ml</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">(</span>
+ <span class="n">message_ids</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># Message includes.</span>
+     <span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+   <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">read</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Test mainloop.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ml</span><span class="o">.</span><span class="n">io_buffers</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [write_loop, read_loop, heartbeat_loop, command_listener]</span>
+   <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">read</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tasks</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+
+<span class="n">lidar</span> <span class="o">=</span> <span class="n">LiDAR</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="n">lidar</span><span class="o">.</span><span class="n">read</span><span class="p">()))</span>
+</pre></div>
+</div>
 <p><strong>Command syntax</strong></p>
-<p><strong>Heartbeats</strong></p>
+<p>FILL THIS OUT</p>
 </section>
 <section id="id1">
 <h2>Examples<a class="headerlink" href="#id1" title="Permalink to this heading">¶</a></h2>
 <p><strong>Restart flight controller</strong></p>
+<p><em>examples/restart.py</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is a simple test method that sends restart commands.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span><span class="p">,</span> <span class="n">UART</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">uasyncio</span> <span class="k">as</span> <span class="nn">asyncio</span>  <span class="c1"># noqa</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">board</span>  <span class="c1"># noqa</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+
+
+<span class="n">m_id</span> <span class="o">=</span> <span class="mi">246</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">([</span><span class="n">m_id</span><span class="p">,</span> <span class="mi">253</span><span class="p">])</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">send</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Send test command&quot;&quot;&quot;</span>
+    <span class="k">await</span> <span class="n">m</span><span class="o">.</span><span class="n">heartbeat_wait</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">await</span> <span class="n">m</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span>
+        <span class="n">command_id</span><span class="o">=</span><span class="mi">246</span><span class="p">,</span>
+        <span class="n">target_system</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">target_component</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+        <span class="n">debug</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">uart_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test mainloop.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">m</span><span class="o">.</span><span class="n">io_buffers</span><span class="p">(</span><span class="n">uart_</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">snd_cmd</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">create_task</span><span class="p">(</span><span class="n">send</span><span class="p">())</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">snd_cmd</span><span class="p">,</span> <span class="o">*</span><span class="n">tasks</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="n">_uart</span><span class="p">))</span>
+</pre></div>
+</div>
 <p><strong>Rangefinder</strong></p>
+<p><em>examples/snc.py</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is an attempt to send some dummy sensor readings.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">uasyncio</span> <span class="k">as</span> <span class="nn">asyncio</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span><span class="p">,</span> <span class="n">UART</span>
+
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">board</span>  <span class="c1"># noqa</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+
+
+<span class="n">ml</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">(</span>
+    <span class="n">message_ids</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># Message includes.</span>
+        <span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">distance_sensor</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This will send the distance sensor messages to the flight controller.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>  <span class="c1"># Transmit loop</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">ml</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span>
+                <span class="n">message_id</span><span class="o">=</span><span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+                <span class="n">payload</span><span class="o">=</span><span class="p">[</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="n">monotonic</span><span class="p">()),</span>  <span class="c1"># boot_time</span>
+                    <span class="mi">1</span><span class="p">,</span>  <span class="c1"># min_distance</span>
+                    <span class="mi">100</span><span class="p">,</span>  <span class="c1"># max_distance</span>
+                    <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>  <span class="c1"># current_distance</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># type</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># id</span>
+                    <span class="mi">25</span><span class="p">,</span>  <span class="c1"># orientation  # Make fucking sure this matched the value in mission planner...</span>
+                    <span class="mi">255</span><span class="p">,</span>  <span class="c1"># covariance</span>
+                    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># horizontal_fov</span>
+                    <span class="mi">20</span><span class="p">,</span>  <span class="c1"># vertical_fov</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># quaternion</span>
+                    <span class="mi">0</span><span class="p">,</span>  <span class="c1"># signal_quality</span>
+                <span class="p">],</span>
+                <span class="n">debug</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="k">break</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">uart_</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test mainloop.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ml</span><span class="o">.</span><span class="n">io_buffers</span><span class="p">(</span><span class="n">uart_</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># [write_loop, read_loop, heartbeat_loop, command_listener]</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">distance_sensor</span><span class="p">(),</span> <span class="o">*</span><span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="n">_uart</span><span class="p">))</span>
+</pre></div>
+</div>
 <p><strong>I2C Multiplexor</strong></p>
+<p><em>examples/mplex.py</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This is an example of how to use multiple vl53l1x sensors over a tca9548a multiplexor</span>
+
+<span class="sd">ArduPilot NOTES:</span>
+
+<span class="sd">* Rangefinder configurations must match transmission data in orientation.</span>
+<span class="sd">* RNGFNDn_TYPE must be set to MavLink (10)</span>
+<span class="sd">* PRX_TYPE Must be set to Mavlink (2)</span>
+
+<span class="sd">It seems that only the orientation is evaluated, not the sensor id or originating component id.</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">uasyncio</span> <span class="k">as</span> <span class="nn">asyncio</span>  <span class="c1"># noqa</span>
+<span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span><span class="p">,</span> <span class="n">UART</span>
+
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">monotonic</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">board</span>  <span class="c1"># noqa</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">TX</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="n">board</span><span class="o">.</span><span class="n">RX</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_uart</span> <span class="o">=</span> <span class="n">UART</span><span class="p">(</span><span class="n">tx</span><span class="o">=</span><span class="mi">17</span><span class="p">,</span> <span class="n">rx</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">230400</span><span class="p">)</span>  <span class="c1"># For micropython, adjust pins as needed.</span>
+
+
+<span class="n">TEST</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Change this if you just want to send random values instead of actually reading the multiplexor.</span>
+
+<span class="n">i2c</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">tca</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">TEST</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">adafruit_tca9548a</span>
+    <span class="kn">import</span> <span class="nn">adafruit_vl53l1x</span>
+    <span class="c1"># Create I2C bus as normal</span>
+    <span class="n">i2c</span> <span class="o">=</span> <span class="n">board</span><span class="o">.</span><span class="n">I2C</span><span class="p">()</span>  <span class="c1"># uses board.SCL and board.SDA</span>
+    <span class="c1"># TODO: We need to add compat for micropython&#39;s I2C.</span>
+    <span class="c1"># Create the TCA9548A object and give it the I2C bus</span>
+    <span class="n">tca</span> <span class="o">=</span> <span class="n">tca9548a</span><span class="o">.</span><span class="n">TCA9548A</span><span class="p">(</span><span class="n">i2c</span><span class="p">)</span>
+
+<span class="c1"># Create the mavlink object and include the definitions of the DISTANCE_SENSOR message</span>
+<span class="n">ml</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">(</span>
+    <span class="n">message_ids</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># Message includes.</span>
+        <span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">I2c channel : orientation (-1 for disabled).</span>
+
+<span class="sd">0    Forward</span>
+<span class="sd">1    Forward-Right</span>
+<span class="sd">2    Right</span>
+<span class="sd">3    Back-Right</span>
+<span class="sd">4    Back</span>
+<span class="sd">5    Back-Left</span>
+<span class="sd">6    Left</span>
+<span class="sd">7    Forward-Left</span>
+<span class="sd">24   Up</span>
+<span class="sd">25   Down</span>
+
+<span class="sd">NOTE: Ensure these orientations meet those configured on the flight controller.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">SENSORS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">0</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>  <span class="c1"># down</span>
+    <span class="mi">1</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>  <span class="c1"># up</span>
+    <span class="mi">2</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>  <span class="c1"># right</span>
+    <span class="mi">3</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>  <span class="c1"># left</span>
+    <span class="mi">4</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>  <span class="c1"># back</span>
+    <span class="mi">5</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># front</span>
+    <span class="mi">6</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="mi">7</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">test_scan</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This will fire up the multiplexer and lidar sensors to prove everything is talking the way it should.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+        <span class="n">needs_unlock</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">try_lock</span><span class="p">():</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Channel </span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">channel</span><span class="p">),</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="n">addresses</span> <span class="o">=</span> <span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">scan</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">address</span> <span class="o">==</span> <span class="mh">0x29</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;found lidar____________________________________________________________________________________&#39;</span><span class="p">)</span>
+                    <span class="n">total</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;unlocking channel&#39;</span><span class="p">)</span>
+                    <span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+                    <span class="n">needs_unlock</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;grabbing sensor&#39;</span><span class="p">)</span>
+                    <span class="n">sensor_i2c</span> <span class="o">=</span> <span class="n">adafruit_vl53l1x</span><span class="o">.</span><span class="n">VL53L1X</span><span class="p">(</span><span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">],</span> <span class="mh">0x29</span><span class="p">)</span>  <span class="c1"># Pass child bus instead of parent.</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;start measuring&#39;</span><span class="p">)</span>
+                    <span class="n">sensor_i2c</span><span class="o">.</span><span class="n">start_ranging</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;record data&#39;</span><span class="p">)</span>
+                    <span class="c1"># while True:</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>  <span class="c1"># Place holder to get multiple samples if desired.</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;check sensor ready&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">sensor_i2c</span><span class="o">.</span><span class="n">data_ready</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;get distance&#39;</span><span class="p">)</span>
+                            <span class="n">distance</span> <span class="o">=</span> <span class="n">sensor_i2c</span><span class="o">.</span><span class="n">distance</span>
+                            <span class="k">if</span> <span class="n">distance</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;reading&#39;</span><span class="p">,</span> <span class="n">distance</span><span class="p">)</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;clearing interrupt&#39;</span><span class="p">)</span>
+                            <span class="n">sensor_i2c</span><span class="o">.</span><span class="n">clear_interrupt</span><span class="p">()</span>
+                        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">needs_unlock</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;unlocking channel&#39;</span><span class="p">)</span>
+            <span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;total modules found:&#39;</span><span class="p">,</span> <span class="n">total</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LiDAR</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    One day this will handle the reading of the LiDAR array. Eight sensors will be read from the TCA9548A and one will be</span>
+<span class="sd">    read from the native I2C bus all at address 0x29 / 41 This will allow us to sample a total of nine rangefinders</span>
+<span class="sd">    through the microcontroller and a tenth via the flight controller&#39;s on-board I2C bus bringing us up to a total</span>
+<span class="sd">    of ten.</span>
+
+<span class="sd">    This will of course allow us to extend this module in the future to accommodate for other types of sensors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rangefinders</span> <span class="o">=</span> <span class="n">channel_nums</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">test</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Here we will fire up all of our sensors and tell them to start taking samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="n">test</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">i2c</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_nums</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rangefinders</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>  <span class="c1"># Confirm all our sensors are healthy</span>
+                <span class="k">if</span> <span class="n">SENSORS</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Skip disabled channels.</span>
+                    <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">try_lock</span><span class="p">():</span>
+                        <span class="n">channel</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+                    <span class="n">rangefinder</span> <span class="o">=</span> <span class="n">adafruit_vl53l1x</span><span class="o">.</span><span class="n">VL53L1X</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="mh">0x29</span><span class="p">)</span>
+                    <span class="n">rangefinder</span><span class="o">.</span><span class="n">start_ranging</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rangefinders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rangefinder</span><span class="p">)</span>
+                    <span class="n">channel</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">mavlink_send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This will send the distance sensor messages to the flight controller.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">await</span> <span class="n">ml</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span>
+            <span class="n">message_id</span><span class="o">=</span><span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+            <span class="n">payload</span><span class="o">=</span><span class="p">[</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">monotonic</span><span class="p">()),</span>  <span class="c1"># boot_time</span>
+                <span class="mi">2</span><span class="p">,</span>  <span class="c1"># min_distance</span>
+                <span class="mi">400</span><span class="p">,</span>  <span class="c1"># max_distance</span>
+                <span class="n">value</span><span class="p">,</span>  <span class="c1"># current_distance</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># type</span>
+                <span class="n">chan</span><span class="p">,</span>  <span class="c1"># id  # This isn&#39;t a requirement, but it&#39;s tidy.</span>
+                <span class="n">SENSORS</span><span class="p">[</span><span class="n">chan</span><span class="p">],</span>  <span class="c1"># orientation  # Make sure this matches the value in mission planner...</span>
+                <span class="mi">255</span><span class="p">,</span>  <span class="c1"># covariance</span>
+                <span class="mi">20</span><span class="p">,</span>  <span class="c1"># horizontal_fov</span>
+                <span class="mi">20</span><span class="p">,</span>  <span class="c1"># vertical_fov</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># quaternion</span>
+                <span class="mi">0</span><span class="p">,</span>  <span class="c1"># signal_quality</span>
+            <span class="p">],</span>
+            <span class="c1"># c_id=chan + 25,  # This isn&#39;t a requirement, but it&#39;s tidy.</span>
+            <span class="n">debug</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">debug</span>
+        <span class="p">)</span>
+        <span class="c1"># print(&#39;sensorID&#39;, chan, &#39;orient&#39;, SENSORS[chan], &#39;value&#39;, value)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">read_sensor</span><span class="p">(</span>
+            <span class="n">channel</span><span class="p">:</span> <span class="p">[</span><span class="n">tca9548a</span><span class="o">.</span><span class="n">TCA9548A</span><span class="p">,</span> <span class="n">board</span><span class="o">.</span><span class="n">I2C</span><span class="p">],</span>
+            <span class="n">rangefinder</span><span class="p">:</span> <span class="n">adafruit_vl53l1x</span><span class="o">.</span><span class="n">VL53L1X</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This will read an individual rangefinder and return the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">try_lock</span><span class="p">():</span>
+            <span class="n">channel</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">rangefinder</span><span class="o">.</span><span class="n">data_ready</span><span class="p">:</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">rangefinder</span><span class="o">.</span><span class="n">distance</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Here we can add dynamic range mode and FOV changes should we want in the future.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rangefinder</span><span class="o">.</span><span class="n">clear_interrupt</span><span class="p">()</span>
+        <span class="n">channel</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This will take a reading from the various sensors and passes them into the mavlink_send method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">channel</span><span class="p">,</span> <span class="n">rangefinder</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel_nums</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rangefinders</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">SENSORS</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Skip disabled channels.</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">value</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_sensor</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">rangefinder</span><span class="p">)</span>
+                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">mavlink_send</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">read</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Test mainloop.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="k">await</span> <span class="n">ml</span><span class="o">.</span><span class="n">io_buffers</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># [write_loop, read_loop, heartbeat_loop, command_listener]</span>
+    <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">read</span><span class="p">,</span> <span class="n">tasks</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">tasks</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+
+<span class="n">lidar</span> <span class="o">=</span> <span class="n">LiDAR</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">(</span><span class="n">lidar</span><span class="o">.</span><span class="n">read</span><span class="p">()))</span>
+</pre></div>
+</div>
 </section>
 </section>
 <section id="links">
@@ -243,7 +607,9 @@ The command callback will be executed when the specified command is received by 
 <section id="notes">
 <h1>Notes<a class="headerlink" href="#notes" title="Permalink to this heading">¶</a></h1>
 <p><strong>Known issues</strong></p>
+<p>FILL THIS OUT</p>
 <p><strong>Future plans</strong></p>
+<p>FILL THIS OUT</p>
 </section>
 <section id="indices-and-tables">
 <h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">¶</a></h1>
