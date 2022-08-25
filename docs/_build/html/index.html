@@ -90,7 +90,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <img alt="_static/mavlite_sphinx.png" src="_static/mavlite_sphinx.png" />
+  <img alt="_images/mavlite_sphinx.png" src="_images/mavlite_sphinx.png" />
 <div class="toctree-wrapper compound">
 </div>
 <section id="about">
@@ -185,6 +185,43 @@
 <section id="general">
 <h2>General<a class="headerlink" href="#general" title="Permalink to this heading">¶</a></h2>
 <p><strong>Message includes</strong></p>
+<p>As the Mavlink dialect files are far too large for general microcontrollers to use, Mavlite includes them based on
+message_ids that are specified in a list object passed during init. Message definitions can be found in the Mavlink
+documentation <em>(see links section)</em>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span>
+
+<span class="c1"># Create the mavlink object and include the definitions of the DISTANCE_SENSOR message</span>
+<span class="n">ml</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">(</span>
+    <span class="n">message_ids</span><span class="o">=</span><span class="p">[</span>  <span class="c1"># Message includes.</span>
+        <span class="mi">132</span><span class="p">,</span>  <span class="c1"># DISTANCE_SENSOR</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Command callbacks</strong></p>
+<p>Incoming commands are handled in the form of callback executions and are defined in a dict object passed during init. Commands
+are required to accept exactly seven arguments, the definition of these arguments is specific to the command* (see
+links section)*. In addition to specific arguments, commands must return three values: <code class="docutils literal notranslate"><span class="pre">result</span></code> | <code class="docutils literal notranslate"><span class="pre">progress</span></code> | <code class="docutils literal notranslate"><span class="pre">result2</span></code>.
+The command callback will be executed when the specified command is received by the <code class="docutils literal notranslate"><span class="pre">command_listener</span></code> task loop.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span>
+
+<span class="k">async</span> <span class="k">def</span> <span class="nf">reboot</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   This is a simple example of an incoming command callback function.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="c1"># A real command should evaluate the 7 bytes of param data that will be passed as args.</span>
+   <span class="kn">import</span> <span class="nn">microcontroller</span>
+   <span class="n">microcontroller</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+   <span class="c1"># Any other command would need to return status information.</span>
+   <span class="c1"># return 0, 0, 0</span>
+
+<span class="n">ml</span> <span class="o">=</span> <span class="n">MavLink</span><span class="p">(</span>
+   <span class="n">callbacks</span><span class="o">=</span><span class="p">{</span>  <span class="c1"># Command callbacks.</span>
+      <span class="mi">246</span><span class="p">:</span> <span class="n">reboot</span>
+   <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+</div>
 <p><strong>Task loops</strong></p>
 <p><strong>Command syntax</strong></p>
 <p><strong>Heartbeats</strong></p>

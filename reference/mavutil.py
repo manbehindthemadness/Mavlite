@@ -215,8 +215,8 @@ def set_dialect(dialect):
 
     wire_protocol = "2.0"
 
-    #Should eventuallybe "micropymavlink.dialects.v20."
-    modname = "micropymavlink." + dialect
+    #Should eventuallybe "src.dialects.v20."
+    modname = "src." + dialect
 
 
     print(modname)

@@ -72,6 +72,50 @@ General
 
 **Message includes**
 
+As the Mavlink dialect files are far too large for general microcontrollers to use, Mavlite includes them based on
+message_ids that are specified in a list object passed during init. Message definitions can be found in the Mavlink
+documentation *(see links section)*.
+
+
+.. code-block:: python
+
+   from mavlite import MavLink
+
+   # Create the mavlink object and include the definitions of the DISTANCE_SENSOR message
+   ml = MavLink(
+       message_ids=[  # Message includes.
+           132,  # DISTANCE_SENSOR
+       ],
+   )
+
+**Command callbacks**
+
+Incoming commands are handled in the form of callback executions and are defined in a dict object passed during init. Commands
+are required to accept exactly seven arguments, the definition of these arguments is specific to the command* (see
+links section)*. In addition to specific arguments, commands must return three values: ``result`` | ``progress`` | ``result2``.
+The command callback will be executed when the specified command is received by the ``command_listener`` task loop.
+
+.. code-block:: python
+
+   from mavlite import MavLink
+
+   async def reboot(*args):
+      """
+      This is a simple example of an incoming command callback function.
+      """
+      # A real command should evaluate the 7 bytes of param data that will be passed as args.
+      import microcontroller
+      microcontroller.reset()
+      # Any other command would need to return status information.
+      # return 0, 0, 0
+
+   ml = MavLink(
+      callbacks={  # Command callbacks.
+         246: reboot
+      }
+   )
+
+
 **Task loops**
 
 **Command syntax**

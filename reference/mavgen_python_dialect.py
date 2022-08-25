@@ -1013,7 +1013,7 @@ class MAVError(Exception):
     """MAVLink error class"""
 
     def __init__(self, msg):
-        # Exception.__init__(self, msg)
+        # Exception.__init__.py(self, msg)
         self.message = msg
 
 
