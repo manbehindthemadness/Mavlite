@@ -12,6 +12,7 @@ It seems that only the orientation is evaluated, not the sensor id or originatin
 
 """
 import random
+import time
 try:
     import asyncio
 except ImportError:
@@ -108,7 +109,7 @@ def test_scan():
                                 print('reading', distance)
                             print('clearing interrupt')
                             sensor_i2c.clear_interrupt()
-                        await asyncio.sleep(0.1)
+                        time.sleep(0.1)
         if needs_unlock:
             print('unlocking channel')
             tca[channel].unlock()
@@ -134,7 +135,7 @@ class LiDAR:
         self.debug = debug
         if not self.test:
             self.channels = [i2c]
-            for channel in channel_nums:
+            for channel in self.channel_nums:
                 self.channels.append(tca[channel])
             self.rangefinders = list()
             for channel in self.channels:  # Confirm all our sensors are healthy
