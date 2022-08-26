@@ -95,7 +95,7 @@
 </div>
 <section id="about">
 <h1>About<a class="headerlink" href="#about" title="Permalink to this heading">¶</a></h1>
-<p>Mavlite is an attempt to make a fully elective, light-weight Mavlink module for micropython and circuitpython.</p>
+<p>Mavlite is an attempt to make a fully elective, asynchronous, and light-weight Mavlink module for micropython and circuitpython.</p>
 </section>
 <section id="system-requirements">
 <h1>System requirements<a class="headerlink" href="#system-requirements" title="Permalink to this heading">¶</a></h1>
@@ -200,8 +200,8 @@ documentation <em>(see links section)</em>.</p>
 </div>
 <p><strong>Command callbacks</strong></p>
 <p>Incoming commands are handled in the form of callback executions and are defined in a dict object passed during init. Commands
-are required to accept exactly seven arguments, the definition of these arguments is specific to the command* (see
-links section)*. In addition to specific arguments, commands must return three values: <code class="docutils literal notranslate"><span class="pre">result</span></code> | <code class="docutils literal notranslate"><span class="pre">progress</span></code> | <code class="docutils literal notranslate"><span class="pre">result2</span></code>.
+are required to accept exactly seven arguments, the definition of these arguments is specific to the command <em>(see
+links section)</em>. In addition to specific arguments, commands must return three values: <code class="docutils literal notranslate"><span class="pre">result</span></code> | <code class="docutils literal notranslate"><span class="pre">progress</span></code> | <code class="docutils literal notranslate"><span class="pre">result2</span></code>.
 The command callback will be executed when the specified command is received by the <code class="docutils literal notranslate"><span class="pre">command_listener</span></code> task loop.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mavlite</span> <span class="kn">import</span> <span class="n">MavLink</span>
 
@@ -255,7 +255,7 @@ that can be fed directly into tasks:</p>
 </pre></div>
 </div>
 <p><strong>Command syntax</strong></p>
-<p>Sending a command can be achieved using <code class="docutils literal notranslate"><span class="pre">mavlite.MavLink.send_command</span></code>. This will transmit the command to the write buffer and attempt to the ACK providing
+<p>Sending a command can be achieved using <code class="docutils literal notranslate"><span class="pre">mavlite.MavLink.send_command</span></code>. This will transmit the command to the write buffer and attempt to return the ACK, providing
 it’s available and has not timed out. Each mavlink command has seven unique params that must be transmitted, the definitions of these can be found in the documentation
 provided in the links section.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">await</span> <span class="n">m</span><span class="o">.</span><span class="n">send_command</span><span class="p">(</span>
@@ -399,6 +399,7 @@ provided in the links section.</p>
 
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">time</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">asyncio</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -495,7 +496,7 @@ provided in the links section.</p>
                                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;reading&#39;</span><span class="p">,</span> <span class="n">distance</span><span class="p">)</span>
                             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;clearing interrupt&#39;</span><span class="p">)</span>
                             <span class="n">sensor_i2c</span><span class="o">.</span><span class="n">clear_interrupt</span><span class="p">()</span>
-                        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">needs_unlock</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;unlocking channel&#39;</span><span class="p">)</span>
             <span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">]</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
@@ -521,7 +522,7 @@ provided in the links section.</p>
         <span class="bp">self</span><span class="o">.</span><span class="n">debug</span> <span class="o">=</span> <span class="n">debug</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">channels</span> <span class="o">=</span> <span class="p">[</span><span class="n">i2c</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="n">channel_nums</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel_nums</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tca</span><span class="p">[</span><span class="n">channel</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">rangefinders</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>  <span class="c1"># Confirm all our sensors are healthy</span>
@@ -626,6 +627,29 @@ provided in the links section.</p>
 <ul class="simple">
 <li><p>Optimize read performance.</p></li>
 <li><p>Accelerate code using C-extensions where possible.</p></li>
+<li><p>Add custom XML dialog functionality.</p></li>
+<li><p>Add request-command/receive functionality.</p></li>
+</ul>
+<p><strong>Caveats</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>At this time this module only supports UART communication, as such packet signing has not been included:</dt><dd><ul>
+<li><p>Serves no function for hard-wired communication.</p></li>
+<li><p>Performance would diminish without hardware SHA acceleration.</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Currently only the following dialects have been included in the MSCFormats dictionary:</dt><dd><ul>
+<li><p>minimal</p></li>
+<li><p>ardupilotmega</p></li>
+<li><p>common</p></li>
+<li><p>uAvionix</p></li>
+</ul>
+</dd>
+</dl>
+</li>
 </ul>
 </section>
 <section id="indices-and-tables">

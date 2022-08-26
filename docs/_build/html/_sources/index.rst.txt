@@ -12,7 +12,7 @@
 About
 =====
 
-Mavlite is an attempt to make a fully elective, light-weight Mavlink module for micropython and circuitpython.
+Mavlite is an attempt to make a fully elective, asynchronous, and light-weight Mavlink module for micropython and circuitpython.
 
 System requirements
 ===================
@@ -91,7 +91,7 @@ documentation *(see links section)*.
 **Command callbacks**
 
 Incoming commands are handled in the form of callback executions and are defined in a dict object passed during init. Commands
-are required to accept exactly seven arguments, the definition of these arguments is specific to the command* (see
+are required to accept exactly seven arguments, the definition of these arguments is specific to the command *(see
 links section)*. In addition to specific arguments, commands must return three values: ``result`` | ``progress`` | ``result2``.
 The command callback will be executed when the specified command is received by the ``command_listener`` task loop.
 
@@ -153,7 +153,7 @@ that can be fed directly into tasks:
 
 **Command syntax**
 
-Sending a command can be achieved using ``mavlite.MavLink.send_command``. This will transmit the command to the write buffer and attempt to the ACK providing
+Sending a command can be achieved using ``mavlite.MavLink.send_command``. This will transmit the command to the write buffer and attempt to return the ACK, providing
 it's available and has not timed out. Each mavlink command has seven unique params that must be transmitted, the definitions of these can be found in the documentation
 provided in the links section.
 
@@ -311,6 +311,7 @@ Examples
 
    """
    import random
+   import time
    try:
        import asyncio
    except ImportError:
@@ -407,7 +408,7 @@ Examples
                                    print('reading', distance)
                                print('clearing interrupt')
                                sensor_i2c.clear_interrupt()
-                           await asyncio.sleep(0.1)
+                           time.sleep(0.1)
            if needs_unlock:
                print('unlocking channel')
                tca[channel].unlock()
@@ -433,7 +434,7 @@ Examples
            self.debug = debug
            if not self.test:
                self.channels = [i2c]
-               for channel in channel_nums:
+               for channel in self.channel_nums:
                    self.channels.append(tca[channel])
                self.rangefinders = list()
                for channel in self.channels:  # Confirm all our sensors are healthy
@@ -538,6 +539,19 @@ Notes
 
 * Optimize read performance.
 * Accelerate code using C-extensions where possible.
+* Add custom XML dialog functionality.
+* Add request-command/receive functionality.
+
+**Caveats**
+
+* At this time this module only supports UART communication, as such packet signing has not been included:
+   * Serves no function for hard-wired communication.
+   * Performance would diminish without hardware SHA acceleration.
+* Currently only the following dialects have been included in the MSCFormats dictionary:
+   * minimal
+   *  ardupilotmega
+   *  common
+   *  uAvionix
 
 Indices and tables
 ==================
