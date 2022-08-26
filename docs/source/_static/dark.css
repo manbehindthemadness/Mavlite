@@ -1612,12 +1612,12 @@
     }
 
     .highlight .hll {
-        background-color: rgb(82, 82, 0);
+        background-color: rgb(33, 102, 148);
     }
 
     .highlight {
         background-image: initial;
-        background-color: rgb(61, 82, 0);
+        background-color: rgb(33, 102, 148);
     }
 
     .highlight .c {
