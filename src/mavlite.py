@@ -558,7 +558,7 @@ class MavLink:
             s_id=s_id,
             c_id=c_id
         )
-        result = await self.packet.send()
+        await self.packet.send()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
             self.ack = await self.ack_wait(command_id, debug)  # noqa
             if not self.ack and self.retries:
@@ -581,7 +581,7 @@ class MavLink:
             self.retries = 10
             self.confirmation = 0
             self.ack = None
-        return result
+        return self.ack
 
     async def receive(self):
         """
