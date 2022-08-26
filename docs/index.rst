@@ -153,7 +153,19 @@ that can be fed directly into tasks:
 
 **Command syntax**
 
-FILL THIS OUT
+Sending a command can be achieved using ``mavlite.MavLink.send_command``. This will transmit the command to the write buffer and attempt to the ACK providing
+it's available and has not timed out. Each mavlink command has seven unique params that must be transmitted, the definitions of these can be found in the documentation
+provided in the links section.
+
+.. code-block:: python
+
+      await m.send_command(
+           command_id=246,
+           target_system=0,
+           target_component=0,
+           params=[1, 0, 0, 0, 0, 0, 0],
+           debug=True
+       )
 
 Examples
 --------
@@ -519,12 +531,13 @@ Notes
 
 **Known issues**
 
-FILL THIS OUT
+* Read loop needs serious optimization.
+* A request-command/receive method has not yet been implemented.
 
 **Future plans**
 
-FILL THIS OUT
-
+* Optimize read performance.
+* Accelerate code using C-extensions where possible.
 
 Indices and tables
 ==================
