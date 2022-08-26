@@ -17,7 +17,7 @@ try:
     import asyncio
 except ImportError:
     import uasyncio as asyncio  # noqa
-from mavlite import MavLink, UART
+from mavlite import MavLink, UART  # noqa
 
 from time import monotonic
 
@@ -33,13 +33,13 @@ TEST = True  # Change this if you just want to send random values instead of act
 i2c = None
 tca = None
 if not TEST:
-    import adafruit_tca9548a
-    import adafruit_vl53l1x
+    import adafruit_tca9548a  # noqa
+    import adafruit_vl53l1x  # noqa
     # Create I2C bus as normal
     i2c = board.I2C()  # uses board.SCL and board.SDA
     # TODO: We need to add compat for micropython's I2C.
     # Create the TCA9548A object and give it the I2C bus
-    tca = tca9548a.TCA9548A(i2c)
+    tca = tca9548a.TCA9548A(i2c)  # noqa
 
 # Create the mavlink object and include the definitions of the DISTANCE_SENSOR message
 ml = MavLink(
@@ -175,7 +175,7 @@ class LiDAR:
 
     @staticmethod
     async def read_sensor(
-            channel: [tca9548a.TCA9548A, board.I2C],
+            channel: [tca9548a.TCA9548A, board.I2C],  # noqa
             rangefinder: adafruit_vl53l1x.VL53L1X
     ) -> [int, float]:
         """
@@ -193,7 +193,7 @@ class LiDAR:
         channel.unlock()
         return result
 
-    async def read(self) -> list:
+    async def read(self):
         """
         This will take a reading from the various sensors and passes them into the mavlink_send method.
         """
