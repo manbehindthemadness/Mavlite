@@ -174,112 +174,209 @@ def check_sender(packet: list, debug: bool = False) -> bool:
         return False
 
 
-async def uart_read(
+has_start_point = False
+
+
+async def none_wait(callback, *args):
+    """
+    Waits for the variable condition to not be none and then returns the result
+    """
+    condition = None
+    while condition is None:
+        condition = await callback(*args)
+        await asyncio.sleep(0.0015)
+    return condition
+
+
+async def uart_read_2(
         _uart: any = None,
         callback: any = None,
         debug: bool = False
-) -> list:
+):
     """
-    Uart packet listener.
-
-    TODO: This needs to be enhanced to use the packet length byte to read variable lengths of whole packets from the
-            RX buffer instead of constantly iterating through every single byte.
+    A better uart packet listener.
     """
-    global stream
-    global packets
+    packet_start, payload_length, packet, message_id, crc = [None] * 5
     global read_buffer
+    global VALID_MESSAGES
     global VALID_SENDERS
-
-    partial_buff = list()
-    raw = await _uart.read(64)
-    if raw:
-        data = list(raw)  # read up to 64 bytes
-        skip = 0
-        if data:
-            for idx, byte in enumerate(range(len(data))):
-                if data[byte] == 253 and not skip:  # Check for start condition.
-                    try:  # Don't check for another magic byte until after the end of this packet.
-                        p_len = data[idx + 1]
-                        min_length = 12 + p_len
-                        # TODO: We will need to add 13 bytes here if the communication is signed.
-                        skip = min_length
-                    except IndexError:
-                        pass
-                    if stream:  # If we have a large partial stored from the last read iteration, finish it.
-                        stream.extend(partial_buff)
-                        if check_sender(stream, debug):
-                            packets.append(stream)
-                        elif debug:
-                            print('skipping packet', stream)
-                    elif partial_buff:  # If the packets are smaller than the read buffer, handle them independently.
-                        if check_sender(partial_buff, debug):
-                            packets.append(partial_buff)
-                        elif debug:
-                            print('skipping packet', partial_buff)
-                    partial_buff = list()
-                    stream = list()
-                partial_buff.append(data[byte])
-                if skip:
-                    skip -= 1
-                await asyncio.sleep(0.0015)
-            stream.extend(partial_buff)
-            if len(packets):
-                for idx, p in enumerate(packets):
-                    try:
-                        if 12 <= len(p) <= 280:  # 12 is the minimum MavLink packet length.
-                            if debug:
-                                print('--------------------')
-                            try:
-                                message_id = struct.unpack("H", bytes(p[7:9]))[0]
-                                if not check_message(message_id):
-                                    if debug:
-                                        print('dropping excluded message', p)
-                                    del packets[idx]  # Clear memory.
-                                    break
-                            except (RuntimeError, ValueError) as err:
-                                print('Unable to unpack message_id', err, '\n', p[7:9])
-                                del packets[idx]  # Clear memory.
-                                break
-                            pay_end = 10 + p[1]
-                            payload = p[10:pay_end]
-                            try:  # Prevent a failure from snowballing into logic down the line.
-                                crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
-                            except RuntimeError as err:
-                                print(err, 'unable to decode crc\n', p, '\n', bytes(p))
-                                del packets[idx]  # Clear memory.
-                                break  # Prevent a failure from snowballing into logic down the line.
-                            chk = p[1:pay_end]
-
-                            msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
-                            msg += f'comp_id {p[6]}, mes_id {message_id}, '
-                            msg += f'payload {payload}, crc {crc}, \nraw {bytes(p)}'
-                            pack = {
-                                'message_id': message_id,
-                                'system_id': p[5],
-                                'component_id': p[6],
-                                'payload': payload,
-                                'increment': p[4],
-                                'crc': crc,
-                                'chk': chk,
-                                'raw': bytes(p)
-                            }
-                            if callback:  # For CRC checking.
-                                if await callback(pack, debug):
-                                    read_buffer.append(pack)
-                            read_buffer = read_buffer[-buffer_size:]
-                        else:
-                            msg = f'dropping packet: {p}'
-                            del packets[idx]  # Clear memory.
-                    except IndexError:
-                        msg = f'bad_data {p}'
-                        del packets[idx]  # Clear memory.
-                    if debug:
-                        print('--------------------\n', 'receiving', msg)
-                    await asyncio.sleep(0.002)
-                packets = list()
+    global has_start_point
+    if not has_start_point:
+        while not has_start_point:  # Find the start point inbetween packets.
+            pointer = await none_wait(_uart.read, 1)
+            pointer = int(list(pointer)[0])
+            await asyncio.sleep(0.5)
+            if pointer == 0xFD:
+                has_start_point = True
+                payload_length = await _uart.read(1)
+                payload_length = int(list(payload_length)[0])
+                packet_start = [pointer] + [payload_length]
+                if debug:
+                    print('found start point')
     else:
-        await asyncio.sleep(0.001)
+        packet_start = await _uart.read(2)
+        try:
+            packet_start = list(packet_start)
+            payload_length = int(packet_start[1])
+        except (TypeError, IndexError):
+            has_start_point = False
+    if has_start_point:
+        fault = False
+        remaining_packet_length = payload_length + 10
+        remaining_packet_content = await _uart.read(remaining_packet_length)
+        try:
+            packet = packet_start + list(remaining_packet_content)
+            message_id = struct.unpack("H", bytes(packet[7:9]))[0]
+        except (RuntimeError, TypeError) as err:
+            if debug:
+                print('dropping packet with malformed message ID', err)
+                fault = True
+        if not fault:
+            excluded = True
+            try:
+                if (packet[5], packet[6]) in VALID_SENDERS and message_id in VALID_MESSAGES:
+                    excluded = False
+            except TypeError:
+                print('PACKET', packet)
+                raise TypeError
+            if not excluded:
+                pay_end = 10 + packet[1]
+                payload = packet[10:pay_end]
+                try:
+                    crc = struct.unpack("H", bytes(packet[pay_end:pay_end + 2]))[0]
+                except RuntimeError as err:
+                    if debug:
+                        print('dropping packet with malformed payload', err)
+                        fault = True
+                if not fault:
+                    chk = packet[1:pay_end]
+                    msg = f'start {packet[0]}, length {packet[1]}, incompat {packet[2]}, compat {packet[3]}, seq {packet[4]}, sys_id {packet[5]}, '
+                    msg += f'comp_id {packet[6]}, mes_id {message_id}, '
+                    msg += f'payload {payload}, crc {crc}, \nraw {bytes(packet)}'
+                    pack = {
+                        'message_id': message_id,
+                        'system_id': packet[5],
+                        'component_id': packet[6],
+                        'payload': payload,
+                        'increment': packet[4],
+                        'crc': crc,
+                        'chk': chk,
+                        'raw': bytes(packet)
+                    }
+                    if callback:  # For CRC checking.
+                        if await callback(pack, debug):
+                            read_buffer.append(pack)
+                    read_buffer = read_buffer[-buffer_size:]
+                    if debug:
+                        print(msg)
     return read_buffer
+
+
+# async def uart_read(
+#         _uart: any = None,
+#         callback: any = None,
+#         debug: bool = False
+# ) -> list:
+#     """
+#     Uart packet listener.
+#
+#     TODO: This needs to be enhanced to use the packet length byte to read variable lengths of whole packets from the
+#             RX buffer instead of constantly iterating through every single byte.
+#     """
+#     global stream
+#     global packets
+#     global read_buffer
+#
+#     partial_buff = list()
+#     raw = await _uart.read(64)
+#     if raw:
+#         data = list(raw)  # read up to 64 bytes
+#         skip = 0
+#         if data:
+#             for idx, byte in enumerate(range(len(data))):
+#                 if data[byte] == 253 and not skip:  # Check for start condition.
+#                     try:  # Don't check for another magic byte until after the end of this packet.
+#                         p_len = data[idx + 1]
+#                         min_length = 12 + p_len
+#                         # TODO: We will need to add 13 bytes here if the communication is signed.
+#                         skip = min_length
+#                     except IndexError:
+#                         pass
+#                     if stream:  # If we have a large partial stored from the last read iteration, finish it.
+#                         stream.extend(partial_buff)
+#                         if check_sender(stream, debug):
+#                             packets.append(stream)
+#                         elif debug:
+#                             print('skipping packet', stream)
+#                     elif partial_buff:  # If the packets are smaller than the read buffer, handle them independently.
+#                         if check_sender(partial_buff, debug):
+#                             packets.append(partial_buff)
+#                         elif debug:
+#                             print('skipping packet', partial_buff)
+#                     partial_buff = list()
+#                     stream = list()
+#                 partial_buff.append(data[byte])
+#                 if skip:
+#                     skip -= 1
+#                 await asyncio.sleep(0.0015)
+#             stream.extend(partial_buff)
+#             if len(packets):
+#                 for idx, p in enumerate(packets):
+#                     try:
+#                         if 12 <= len(p) <= 280:  # 12 is the minimum MavLink packet length.
+#                             if debug:
+#                                 print('--------------------')
+#                             try:
+#                                 message_id = struct.unpack("H", bytes(p[7:9]))[0]
+#                                 if not check_message(message_id):
+#                                     if debug:
+#                                         print('dropping excluded message', p)
+#                                     del packets[idx]  # Clear memory.
+#                                     break
+#                             except (RuntimeError, ValueError) as err:
+#                                 print('Unable to unpack message_id', err, '\n', p[7:9])
+#                                 del packets[idx]  # Clear memory.
+#                                 break
+#                             pay_end = 10 + p[1]
+#                             payload = p[10:pay_end]
+#                             try:  # Prevent a failure from snowballing into logic down the line.
+#                                 crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
+#                             except RuntimeError as err:
+#                                 print(err, 'unable to decode crc\n', p, '\n', bytes(p))
+#                                 del packets[idx]  # Clear memory.
+#                                 break  # Prevent a failure from snowballing into logic down the line.
+#                             chk = p[1:pay_end]
+#
+#                             msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
+#                             msg += f'comp_id {p[6]}, mes_id {message_id}, '
+#                             msg += f'payload {payload}, crc {crc}, \nraw {bytes(p)}'
+#                             pack = {
+#                                 'message_id': message_id,
+#                                 'system_id': p[5],
+#                                 'component_id': p[6],
+#                                 'payload': payload,
+#                                 'increment': p[4],
+#                                 'crc': crc,
+#                                 'chk': chk,
+#                                 'raw': bytes(p)
+#                             }
+#                             if callback:  # For CRC checking.
+#                                 if await callback(pack, debug):
+#                                     read_buffer.append(pack)
+#                             read_buffer = read_buffer[-buffer_size:]
+#                         else:
+#                             msg = f'dropping packet: {p}'
+#                             del packets[idx]  # Clear memory.
+#                     except IndexError:
+#                         msg = f'bad_data {p}'
+#                         del packets[idx]  # Clear memory.
+#                     if debug:
+#                         print('--------------------\n', 'receiving', msg)
+#                     await asyncio.sleep(0.002)
+#                 packets = list()
+#     else:
+#         await asyncio.sleep(0.001)
+#     return read_buffer
 
 
 async def uart_write(_uart: any, debug: bool = False):
@@ -310,7 +407,7 @@ async def uart_io(_uart: any, callback: any = None, debug: bool = False):
     Mainloop for this operation.
     """
     await uart_write(_uart, debug)
-    await uart_read(_uart, callback, debug)
+    await uart_read_2(_uart, callback, debug)
 
 
 def test():
@@ -324,10 +421,10 @@ def test():
         """
         A while clause...
         """
-        _uart = UART(tx=board.TX, rx=board.RX, baudrate=115200)
+        _uart = UART(tx=board.TX, rx=board.RX, baudrate=230400)
         while True:
             try:
-                await uart_io(_uart, True)
+                await uart_io(_uart, debug=True)
             except KeyboardInterrupt:
                 break
             await asyncio.sleep(0.00014)

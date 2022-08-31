@@ -30,7 +30,7 @@ try:
     from uart import (
         senders,
         messages,
-        uart_read,
+        uart_read_2 as uart_read,
         uart_write,
         write_buffer,
         UART
@@ -39,7 +39,7 @@ except ImportError:
     from .uart import (
         senders,
         messages,
-        uart_read,
+        uart_read_2 as uart_read,
         uart_write,
         write_buffer,
         UART
