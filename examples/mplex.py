@@ -17,7 +17,7 @@ try:
     import asyncio
 except ImportError:
     import uasyncio as asyncio  # noqa
-from mavlite import MavLink, UART  # noqa
+from mavlite import MavLink, UART
 
 from time import monotonic
 
@@ -28,18 +28,18 @@ except ImportError:
     _uart = UART(tx=17, rx=16, baudrate=230400)  # For micropython, adjust pins as needed.
 
 
-TEST = True  # Change this if you just want to send random values instead of actually reading the multiplexor.
+TEST = False  # Change this if you just want to send random values instead of actually reading the multiplexor.
 
 i2c = None
 tca = None
 if not TEST:
-    import adafruit_tca9548a  # noqa
-    import adafruit_vl53l1x  # noqa
+    import adafruit_tca9548a
+    import adafruit_vl53l1x
     # Create I2C bus as normal
     i2c = board.I2C()  # uses board.SCL and board.SDA
     # TODO: We need to add compat for micropython's I2C.
     # Create the TCA9548A object and give it the I2C bus
-    tca = tca9548a.TCA9548A(i2c)  # noqa
+    tca = adafruit_tca9548a.TCA9548A(i2c)
 
 # Create the mavlink object and include the definitions of the DISTANCE_SENSOR message
 ml = MavLink(
@@ -66,12 +66,12 @@ I2c channel : orientation (-1 for disabled).
 NOTE: Ensure these orientations meet those configured on the flight controller.
 """
 SENSORS = {
-    0: 25,  # down
+    0: 0,  # front
     1: 24,  # up
     2: 2,  # right
-    3: 6,  # left
-    4: 4,  # back
-    5: 0,  # front
+    3: 4,  # back
+    4: 25,  # down
+    5: 6,  # left
     6: -1,
     7: -1
 }
@@ -134,31 +134,33 @@ class LiDAR:
         self.test = test
         self.debug = debug
         if not self.test:
-            self.channels = [i2c]
+            self.channels = list()
             for channel in self.channel_nums:
                 self.channels.append(tca[channel])
             self.rangefinders = list()
-            for channel in self.channels:  # Confirm all our sensors are healthy
-                if SENSORS[channel] >= 0:  # Skip disabled channels.
+            for channel_num, channel in zip(self.channel_nums, self.channels):  # Confirm all our sensors are healthy
+                needs_unlock = True
+                if SENSORS[channel_num] >= 0:  # Skip disabled channels.
                     if channel.try_lock():
                         channel.unlock()
+                        needs_unlock = False
                     rangefinder = adafruit_vl53l1x.VL53L1X(channel, 0x29)
                     rangefinder.start_ranging()
                     self.rangefinders.append(rangefinder)
-                    channel.unlock()
+                    if needs_unlock:
+                        channel.unlock()
 
     async def mavlink_send(self, chan: int, value: int):
         """
         This will send the distance sensor messages to the flight controller.
         """
-
         await ml.send_message(
             message_id=132,  # DISTANCE_SENSOR
             payload=[
                 int(monotonic()),  # boot_time
                 2,  # min_distance
                 400,  # max_distance
-                value,  # current_distance
+                int(value),  # current_distance
                 0,  # type
                 chan,  # id  # This isn't a requirement, but it's tidy.
                 SENSORS[chan],  # orientation  # Make sure this matches the value in mission planner...
@@ -168,14 +170,14 @@ class LiDAR:
                 0,  # quaternion
                 0,  # signal_quality
             ],
-            # c_id=chan + 25,  # This isn't a requirement, but it's tidy.
+            c_id=chan + 25,  # This isn't a requirement, but it's tidy.
             debug=self.debug
         )
         # print('sensorID', chan, 'orient', SENSORS[chan], 'value', value)
 
     @staticmethod
     async def read_sensor(
-            channel: [tca9548a.TCA9548A, board.I2C],  # noqa
+            channel: [tca9548a.TCA9548A, board.I2C],
             rangefinder: adafruit_vl53l1x.VL53L1X
     ) -> [int, float]:
         """
@@ -190,10 +192,11 @@ class LiDAR:
         Here we can add dynamic range mode and FOV changes should we want in the future.
         """
         rangefinder.clear_interrupt()
-        channel.unlock()
+        if channel.try_lock():
+            channel.unlock()
         return result
 
-    async def read(self):
+    async def read(self) -> list:
         """
         This will take a reading from the various sensors and passes them into the mavlink_send method.
         """
@@ -203,7 +206,7 @@ class LiDAR:
                     if self.test:
                         value = random.randint(1, 100)
                     else:
-                        value = await self.read_sensor(channel, rangefinder)
+                        value = await self.read_sensor(self.channels[channel], rangefinder)
                     await self.mavlink_send(channel, value)
 
 
@@ -215,6 +218,10 @@ async def main(read):
     await asyncio.gather(read, tasks[0], tasks[2])
 
 
-lidar = LiDAR(debug=True, test=True)
+def start(debug: bool = False, test: bool = False):
+    """
+    Launch the main loop
+    """
+    lidar = LiDAR(debug=debug, test=test)
 
-asyncio.run(main(lidar.read()))
+    asyncio.run(main(lidar.read()))

@@ -17,6 +17,7 @@ import os
 import sys
 import time
 import xml.parsers.expat
+import json
 
 PROTOCOL_0_9 = "0.9"
 PROTOCOL_1_0 = "1.0"
@@ -702,12 +703,15 @@ for name in fileNames:
         print(Orders)
         ItemDict[message.id] = (Format, Loaded.message_crcs[message.id], Orders if message.id <= 255 else [])
 
-destination = here / 'src/MSGFormats.py'
+destination = here / 'src/formats.json'
 
-f = open(destination, "w")
-f.write("formats = ")
-f.write(str(ItemDict))
-f.close()
+# f = open(destination, "w")
+# f.write("formats = ")
+# f.write(str(ItemDict))
+# f.close()
+
+with open(destination, "w") as target:
+    json.dump(ItemDict, target)
 
 # check version consistent
 # add test.xml

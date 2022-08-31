@@ -16,6 +16,7 @@ TypesList = {
     "uint64_t":"Q"
     }
 """
+import json
 import gc
 import array
 import struct
@@ -26,7 +27,7 @@ except ImportError:
     import uasyncio as asyncio  # noqa
 
 try:
-    from MSGFormats import formats
+    # from MSGFormats import formats
     from uart import (
         uart_read,
         uart_write,
@@ -34,7 +35,7 @@ try:
         UART
     )
 except ImportError:
-    from .MSGFormats import formats
+    # from .MSGFormats import formats
     from .uart import (
         uart_read,
         uart_write,
@@ -52,6 +53,26 @@ defs = {
     'ifl': 0
 
 }
+
+
+def load_formats():
+    """
+    Loads our formats from JSON.
+    """
+    data = str()
+    with open('mavlite/formats.json', "r") as data_list:
+        lines = data_list.readlines()
+        for line in lines:
+            data += line
+    data_list.close()
+    _formats = json.loads(data)
+    for key in _formats.keys():
+        _formats[int(key)] = _formats[key]
+        del _formats[key]
+    return _formats
+
+
+formats = load_formats()
 
 
 async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
@@ -544,7 +565,7 @@ class MavLink:
             c_flags: int = defs['cfl'],
             i_flags: int = defs['ifl'],
             debug: bool = False
-    ) -> Packet:
+    ) -> [Packet, None]:
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
@@ -611,7 +632,6 @@ class MavLink:
             global TERM
             while not TERM:
                 read_buffer = await uart_read(_uart, crc_check, _debug)
-                gc.collect()
 
         async def write_loop():
             """
@@ -620,6 +640,8 @@ class MavLink:
             global TERM
             while not TERM:
                 await uart_write(_uart, _debug)
+                gc.collect()
+                # print("MEMORY ALLOCATED", gc.mem_alloc(), len(formats))
 
         async def heartbeat_loop():
             """
