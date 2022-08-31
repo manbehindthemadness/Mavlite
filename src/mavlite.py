@@ -735,7 +735,6 @@ async def test(_uart):
             params=[1, 0, 0, 0, 0, 0, 0],
             debug=True
         )
-        senders(list())
 
     async def main(uart_):
         """
