@@ -27,7 +27,6 @@ except ImportError:
     import uasyncio as asyncio  # noqa
 
 try:
-    # from MSGFormats import formats
     from uart import (
         senders,
         messages,
@@ -37,7 +36,6 @@ try:
         UART
     )
 except ImportError:
-    # from .MSGFormats import formats
     from .uart import (
         senders,
         messages,
@@ -63,15 +61,24 @@ def load_formats():
     Loads our formats from JSON.
     """
     data = str()
-    with open('mavlite/formats.json', "r") as data_list:
-        lines = data_list.readlines()
-        for line in lines:
-            data += line
+    try:
+        with open('mavlite/formats.json', "r") as data_list:
+            lines = data_list.readlines()
+            for line in lines:
+                data += line
+    except FileNotFoundError:  # For documentation.
+        with open('../src/formats.json', "r") as data_list:
+            lines = data_list.readlines()
+            for line in lines:
+                data += line
     data_list.close()
     _formats = json.loads(data)
-    for key in _formats.keys():
-        _formats[int(key)] = _formats[key]
-        del _formats[key]
+    try:
+        for key in _formats.keys():
+            _formats[int(key)] = _formats[key]
+            del _formats[key]
+    except RuntimeError:  # For documentation.
+        pass
     return _formats
 
 
