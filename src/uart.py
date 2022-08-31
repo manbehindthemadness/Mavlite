@@ -6,6 +6,24 @@ except ImportError:
     import uasyncio as asyncio  # noqa
 
 magic = [253]
+TERM = False
+stream = list()
+packets = list()
+read_buffer = list()
+write_buffer = list()
+
+
+buffer_size = 8
+
+
+VALID_SENDERS = [
+    (1, 1),
+]
+VALID_MESSAGES = [
+    0,
+    76,
+    77
+]
 
 
 class UART:
@@ -110,27 +128,65 @@ class UART:
         return result
 
 
-TERM = False
-stream = list()
-packets = list()
-read_buffer = list()
-write_buffer = list()
+def messages(valid_messages: [list, None] = None):
+    """
+    Allows to drop unneeded message packets to save cycles.
+    """
+    global VALID_MESSAGES
+    VALID_MESSAGES = list()
+    if valid_messages:
+        VALID_MESSAGES = valid_messages
+    return VALID_MESSAGES
 
 
-buffer_size = 8
+def check_message(message_id: int) -> bool:
+    """
+    Cecks to see if we should keep the message, or drop it to save memory.
+    """
+    global VALID_MESSAGES
+    return message_id in VALID_MESSAGES
 
 
-async def uart_read(_uart: any = None, callback: any = None, debug: bool = False) -> list:
+def senders(valid_senders: [list, None] = None):
+    """
+    Allows us to set the criteria for messages we will include in the read buffer.
+
+    The idea here is to allow conditional packet reception so, we don't bother decoding packets that aren't relevant.
+    """
+    global VALID_SENDERS
+    VALID_SENDERS = list()
+    if valid_senders:
+        VALID_SENDERS = valid_senders
+    return VALID_SENDERS
+
+
+def check_sender(packet: list, debug: bool = False) -> bool:
+    """
+    Used to determine if we should drop a packet.
+    """
+    global VALID_SENDERS
+    try:
+        sender = packet[5], packet[6]
+        return sender in VALID_SENDERS
+    except IndexError:
+        if debug:
+            print('unable to check sender on partial packet')
+        return False
+
+
+async def uart_read(
+        _uart: any = None,
+        callback: any = None,
+        debug: bool = False
+) -> list:
     """
     Uart packet listener.
-
-    TODO: This needs to take into account message includes so we don't spend all this processing time decoding every
-            packet.
-
     """
     global stream
     global packets
     global read_buffer
+    global VALID_SENDERS
+
     partial_buff = list()
     raw = await _uart.read(64)
     if raw:
@@ -138,7 +194,7 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
         skip = 0
         if data:
             for idx, byte in enumerate(range(len(data))):
-                if data[byte] in magic and not skip:  # Check for start condition.
+                if data[byte] == 253 and not skip:  # Check for start condition.
                     try:  # Don't check for another magic byte until after the end of this packet.
                         p_len = data[idx + 1]
                         min_length = 12 + p_len
@@ -148,9 +204,15 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                         pass
                     if stream:  # If we have a large partial stored from the last read iteration, finish it.
                         stream.extend(partial_buff)
-                        packets.append(stream)
+                        if check_sender(stream, debug):
+                            packets.append(stream)
+                        elif debug:
+                            print('skipping packet', stream)
                     elif partial_buff:  # If the packets are smaller than the read buffer, handle them independently.
-                        packets.append(partial_buff)
+                        if check_sender(partial_buff, debug):
+                            packets.append(partial_buff)
+                        elif debug:
+                            print('skipping packet', partial_buff)
                     partial_buff = list()
                     stream = list()
                 partial_buff.append(data[byte])
@@ -166,6 +228,11 @@ async def uart_read(_uart: any = None, callback: any = None, debug: bool = False
                                 print('--------------------')
                             try:
                                 message_id = struct.unpack("H", bytes(p[7:9]))[0]
+                                if not check_message(message_id):
+                                    if debug:
+                                        print('dropping excluded message', p)
+                                    del packets[idx]  # Clear memory.
+                                    break
                             except (RuntimeError, ValueError) as err:
                                 print('Unable to unpack message_id', err, '\n', p[7:9])
                                 del packets[idx]  # Clear memory.

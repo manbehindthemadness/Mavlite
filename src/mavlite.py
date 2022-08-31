@@ -29,6 +29,8 @@ except ImportError:
 try:
     # from MSGFormats import formats
     from uart import (
+        senders,
+        messages,
         uart_read,
         uart_write,
         write_buffer,
@@ -37,6 +39,8 @@ try:
 except ImportError:
     # from .MSGFormats import formats
     from .uart import (
+        senders,
+        messages,
         uart_read,
         uart_write,
         write_buffer,
@@ -51,7 +55,6 @@ defs = {
     'cid': 158,
     'cfl': 0,
     'ifl': 0
-
 }
 
 
@@ -398,6 +401,7 @@ class Command:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
                     if message['payload'] == [cmd_id]:
+                        ack = dict(read_buffer[idx])
                         del read_buffer[idx]
                         if debug:
                             print('\n\n\n\nfound ACK **************************************************************************\n\n\n\n')
@@ -459,7 +463,7 @@ class MavLink:
             command_ids = list(callbacks.keys())
             message_ids.extend(command_ids)
         self.callbacks = callbacks
-        message_ids.extend([76, 77, 0, 111])
+        message_ids.extend([76, 77, 0])
         for f in formats:
             if f not in message_ids:
                 del formats[f]
@@ -470,62 +474,88 @@ class MavLink:
 
         self.retries = retries
 
+        self.senders = senders  # Allows us to filter incoming traffic senders.
+        self.valid_messages = list()
+        self.messages = messages  # Allows us to filter incoming message IDs.
+        self.messages()  # Quiet all incoming message IDs.
+
+    def allowed_messages(self, ids: [list, None] = None, removals: [list, None] = None):
+        """
+        Allows us to adjust the packet types we want to keep in the read buffer.
+        """
+        if ids:
+            for i in ids:
+                if i not in self.valid_messages:
+                    self.valid_messages.append(i)
+        if removals:
+            for idx, i in enumerate(self.valid_messages):
+                if i in removals:
+                    del self.valid_messages[idx]
+        self.messages(self.valid_messages)
+        return self
+
     async def command_parser(self, debug: bool = False):
         """
         This will collect incoming commands and fire off their respective callbacks.
         """
+        self.allowed_messages([76])  # Ensure we are listening for command packets.
         global read_buffer
-        for idx, p in enumerate(read_buffer):
-            if p['message_id'] == 76:  # Check if the message is a command.
-                if [p['system_id'], p['component_id']] != [self.system_id, self.component_id]:  # Ignore our own commands.
-                    pl = await decode_payload(76, p['payload'], debug=debug)
-                    sid = pl[0]  # Target system.
-                    cid = pl[1]  # Target component.
-                    if sid in [0, 255, self.system_id]:
-                        if cid in [0, 255, self.component_id]:
-                            cmd = pl[2]  # Target command.
-                            args = pl[4:]  # Get the seven arguments.
-                            if cmd in self.callbacks.keys():
+        if len(read_buffer):
+            for idx, p in enumerate(read_buffer):
+                if p['message_id'] == 76:  # Check if the message is a command.
+                    if [p['system_id'], p['component_id']] != [self.system_id, self.component_id]:  # Ignore our own commands.
+                        pl = await decode_payload(76, p['payload'], debug=debug)
+                        sid = pl[0]  # Target system.
+                        cid = pl[1]  # Target component.
+                        if sid in [0, 255, self.system_id]:
+                            if cid in [0, 255, self.component_id]:
+                                cmd = pl[2]  # Target command.
+                                args = pl[4:]  # Get the seven arguments.
+                                if cmd in self.callbacks.keys():
 
-                                prefix = [cmd]
-                                suffix = [p['system_id'], p['component_id']]
+                                    prefix = [cmd]
+                                    suffix = [p['system_id'], p['component_id']]
 
-                                callback = self.callbacks[cmd]
-                                post = False
-                                if cmd == 246:  # Determine if we have been commanded to shut down.
-                                    post = True
-                                    ack_payload = prefix + [0, 0, 0] + suffix
-                                else:
-                                    ack_payload = await callback(*args)
-                                    if len(ack_payload) != 3:
-                                        print('ERROR: callback results should have exactly three members, not', len(ack_payload))
-                                        raise ValueError
-                                    ack_payload = prefix + ack_payload + suffix
-                                await self.send_message(  # Send command ACK.
-                                    77,
-                                    ack_payload,
-                                    s_id=self.system_id,
-                                    c_id=self.component_id
-                                )
-                                if post:  # If the command is shutdown/restart, execute after the ack has been sent.
-                                    await callback(*args)
-                            elif debug:
-                                print('received command', cmd, 'without format definition')
-                            del read_buffer[idx]
-            await asyncio.sleep(0.00018)
+                                    callback = self.callbacks[cmd]
+                                    post = False
+                                    if cmd == 246:  # Determine if we have been commanded to shut down.
+                                        post = True
+                                        ack_payload = prefix + [0, 0, 0] + suffix
+                                    else:
+                                        ack_payload = await callback(*args)
+                                        if len(ack_payload) != 3:
+                                            print('ERROR: callback results should have exactly three members, not', len(ack_payload))
+                                            raise ValueError
+                                        ack_payload = prefix + ack_payload + suffix
+                                    await self.send_message(  # Send command ACK.
+                                        77,
+                                        ack_payload,
+                                        s_id=self.system_id,
+                                        c_id=self.component_id
+                                    )
+                                    if post:  # If the command is shutdown/restart, execute after the ack has been sent.
+                                        await callback(*args)
+                                elif debug:
+                                    print('received command', cmd, 'without format definition')
+                                del read_buffer[idx]
+        await asyncio.sleep(0.0018)
 
     async def heartbeat_wait(self, debug: bool = False):
         """
         Wait for heartbeat packet.
         """
+        self.allowed_messages([0])  # Listen for the heartbeat.
         result = await self.heartbeat.wait(debug)  # noqa
+        self.allowed_messages(removals=[0])  # Quiet further messages.
         return result
 
     async def ack_wait(self, command_id: int, debug: bool = False):
         """
         This will wait for a command ACK up to a specific timeout.
         """
+        self.allowed_messages([77])  # Listen for the ACK.
         result = await self.command.wait(command_id, debug)  # noqa
+        self.allowed_messages(removals=[77])  # Quiet further messages.
         return result
 
     async def send_message(
@@ -602,6 +632,7 @@ class MavLink:
             self.retries = 10
             self.confirmation = 0
             self.ack = None
+            self.messages()  # Quiet further messages.
         return self.ack
 
     async def receive(self):
@@ -704,7 +735,7 @@ async def test(_uart):
             params=[1, 0, 0, 0, 0, 0, 0],
             debug=True
         )
-        print('\n\n\n\n----------------------------- IF YOU SEE THIS THERE HAS BEEN AN ERROR -----------------------------------\n\n\n\n')
+        senders(list())
 
     async def main(uart_):
         """
