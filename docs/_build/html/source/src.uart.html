@@ -135,6 +135,31 @@
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="src.uart.check_message">
+<span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">check_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">message_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/src/uart.html#check_message"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.check_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cecks to see if we should keep the message, or drop it to save memory.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.uart.check_sender">
+<span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">check_sender</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">packet</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/src/uart.html#check_sender"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.check_sender" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to determine if we should drop a packet.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.uart.messages">
+<span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">messages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valid_messages:</span> <span class="pre">[&lt;class</span> <span class="pre">'list'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">None]</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#messages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.messages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows to drop unneeded message packets to save cycles.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="src.uart.senders">
+<span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">senders</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">valid_senders:</span> <span class="pre">[&lt;class</span> <span class="pre">'list'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">None]</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#senders"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.senders" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allows us to set the criteria for messages we will include in the read buffer.</p>
+<p>The idea here is to allow conditional packet reception so, we don’t bother decoding packets that aren’t relevant.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="src.uart.test">
 <span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a test loop</p>
@@ -150,10 +175,6 @@
 <dt class="sig sig-object py" id="src.uart.uart_read">
 <em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">uart_read</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_uart</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">callback</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">any</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">debug</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="../_modules/src/uart.html#uart_read"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.uart_read" title="Permalink to this definition">¶</a></dt>
 <dd><p>Uart packet listener.</p>
-<dl class="simple">
-<dt>TODO: This needs to take into account message includes so we don’t spend all this processing time decoding every</dt><dd><p>packet.</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py function">

@@ -86,6 +86,7 @@
 <span class="sd">    &quot;uint64_t&quot;:&quot;Q&quot;</span>
 <span class="sd">    }</span>
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">gc</span>
 <span class="kn">import</span> <span class="nn">array</span>
 <span class="kn">import</span> <span class="nn">struct</span>
@@ -96,16 +97,18 @@
     <span class="kn">import</span> <span class="nn">uasyncio</span> <span class="k">as</span> <span class="nn">asyncio</span>  <span class="c1"># noqa</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">MSGFormats</span> <span class="kn">import</span> <span class="n">formats</span>
     <span class="kn">from</span> <span class="nn">uart</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">senders</span><span class="p">,</span>
+        <span class="n">messages</span><span class="p">,</span>
         <span class="n">uart_read</span><span class="p">,</span>
         <span class="n">uart_write</span><span class="p">,</span>
         <span class="n">write_buffer</span><span class="p">,</span>
         <span class="n">UART</span>
     <span class="p">)</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">.MSGFormats</span> <span class="kn">import</span> <span class="n">formats</span>
     <span class="kn">from</span> <span class="nn">.uart</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">senders</span><span class="p">,</span>
+        <span class="n">messages</span><span class="p">,</span>
         <span class="n">uart_read</span><span class="p">,</span>
         <span class="n">uart_write</span><span class="p">,</span>
         <span class="n">write_buffer</span><span class="p">,</span>
@@ -120,8 +123,36 @@
     <span class="s1">&#39;cid&#39;</span><span class="p">:</span> <span class="mi">158</span><span class="p">,</span>
     <span class="s1">&#39;cfl&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
     <span class="s1">&#39;ifl&#39;</span><span class="p">:</span> <span class="mi">0</span>
-
 <span class="p">}</span>
+
+
+<div class="viewcode-block" id="load_formats"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.load_formats">[docs]</a><span class="k">def</span> <span class="nf">load_formats</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Loads our formats from JSON.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">str</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;mavlite/formats.json&#39;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">data_list</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">data_list</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="n">line</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>  <span class="c1"># For documentation.</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;../src/formats.json&#39;</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">data_list</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">data_list</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="n">line</span>
+    <span class="n">data_list</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">_formats</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_formats</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">_formats</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">_formats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">del</span> <span class="n">_formats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>  <span class="c1"># For documentation.</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">_formats</span></div>
+
+
+<span class="n">formats</span> <span class="o">=</span> <span class="n">load_formats</span><span class="p">()</span>
 
 
 <div class="viewcode-block" id="decode_payload"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.decode_payload">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">decode_payload</span><span class="p">(</span><span class="n">message_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">payload</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">format_override</span><span class="p">:</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
@@ -447,6 +478,7 @@
             <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">77</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">cmd_id</span><span class="p">]:</span>
+                        <span class="n">ack</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
                         <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
                         <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
                             <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">found ACK **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -508,7 +540,7 @@
             <span class="n">command_ids</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">callbacks</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="n">message_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">command_ids</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span> <span class="o">=</span> <span class="n">callbacks</span>
-        <span class="n">message_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="mi">76</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">111</span><span class="p">])</span>
+        <span class="n">message_ids</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="mi">76</span><span class="p">,</span> <span class="mi">77</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">formats</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">message_ids</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">formats</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
@@ -519,62 +551,88 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">retries</span> <span class="o">=</span> <span class="n">retries</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">senders</span> <span class="o">=</span> <span class="n">senders</span>  <span class="c1"># Allows us to filter incoming traffic senders.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span> <span class="o">=</span> <span class="n">messages</span>  <span class="c1"># Allows us to filter incoming message IDs.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">()</span>  <span class="c1"># Quiet all incoming message IDs.</span>
+
+<div class="viewcode-block" id="MavLink.allowed_messages"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.allowed_messages">[docs]</a>    <span class="k">def</span> <span class="nf">allowed_messages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">removals</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allows us to adjust the packet types we want to keep in the read buffer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">ids</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">removals</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">removals</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
 <div class="viewcode-block" id="MavLink.command_parser"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.command_parser">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">command_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will collect incoming commands and fire off their respective callbacks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">76</span><span class="p">])</span>  <span class="c1"># Ensure we are listening for command packets.</span>
         <span class="k">global</span> <span class="n">read_buffer</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">76</span><span class="p">:</span>  <span class="c1"># Check if the message is a command.</span>
-                <span class="k">if</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;system_id&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;component_id&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_id</span><span class="p">]:</span>  <span class="c1"># Ignore our own commands.</span>
-                    <span class="n">pl</span> <span class="o">=</span> <span class="k">await</span> <span class="n">decode_payload</span><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">],</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">)</span>
-                    <span class="n">sid</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Target system.</span>
-                    <span class="n">cid</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Target component.</span>
-                    <span class="k">if</span> <span class="n">sid</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">]:</span>
-                        <span class="k">if</span> <span class="n">cid</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_id</span><span class="p">]:</span>
-                            <span class="n">cmd</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Target command.</span>
-                            <span class="n">args</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>  <span class="c1"># Get the seven arguments.</span>
-                            <span class="k">if</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">76</span><span class="p">:</span>  <span class="c1"># Check if the message is a command.</span>
+                    <span class="k">if</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;system_id&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;component_id&#39;</span><span class="p">]]</span> <span class="o">!=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_id</span><span class="p">]:</span>  <span class="c1"># Ignore our own commands.</span>
+                        <span class="n">pl</span> <span class="o">=</span> <span class="k">await</span> <span class="n">decode_payload</span><span class="p">(</span><span class="mi">76</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">],</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">)</span>
+                        <span class="n">sid</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Target system.</span>
+                        <span class="n">cid</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Target component.</span>
+                        <span class="k">if</span> <span class="n">sid</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">]:</span>
+                            <span class="k">if</span> <span class="n">cid</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">component_id</span><span class="p">]:</span>
+                                <span class="n">cmd</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Target command.</span>
+                                <span class="n">args</span> <span class="o">=</span> <span class="n">pl</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>  <span class="c1"># Get the seven arguments.</span>
+                                <span class="k">if</span> <span class="n">cmd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
 
-                                <span class="n">prefix</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
-                                <span class="n">suffix</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;system_id&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;component_id&#39;</span><span class="p">]]</span>
+                                    <span class="n">prefix</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
+                                    <span class="n">suffix</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="s1">&#39;system_id&#39;</span><span class="p">],</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;component_id&#39;</span><span class="p">]]</span>
 
-                                <span class="n">callback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
-                                <span class="n">post</span> <span class="o">=</span> <span class="kc">False</span>
-                                <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="mi">246</span><span class="p">:</span>  <span class="c1"># Determine if we have been commanded to shut down.</span>
-                                    <span class="n">post</span> <span class="o">=</span> <span class="kc">True</span>
-                                    <span class="n">ack_payload</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">suffix</span>
-                                <span class="k">else</span><span class="p">:</span>
-                                    <span class="n">ack_payload</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-                                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ack_payload</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
-                                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR: callback results should have exactly three members, not&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ack_payload</span><span class="p">))</span>
-                                        <span class="k">raise</span> <span class="ne">ValueError</span>
-                                    <span class="n">ack_payload</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">ack_payload</span> <span class="o">+</span> <span class="n">suffix</span>
-                                <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span>  <span class="c1"># Send command ACK.</span>
-                                    <span class="mi">77</span><span class="p">,</span>
-                                    <span class="n">ack_payload</span><span class="p">,</span>
-                                    <span class="n">s_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">,</span>
-                                    <span class="n">c_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">component_id</span>
-                                <span class="p">)</span>
-                                <span class="k">if</span> <span class="n">post</span><span class="p">:</span>  <span class="c1"># If the command is shutdown/restart, execute after the ack has been sent.</span>
-                                    <span class="k">await</span> <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
-                            <span class="k">elif</span> <span class="n">debug</span><span class="p">:</span>
-                                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;received command&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="s1">&#39;without format definition&#39;</span><span class="p">)</span>
-                            <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.00018</span><span class="p">)</span></div>
+                                    <span class="n">callback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">callbacks</span><span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
+                                    <span class="n">post</span> <span class="o">=</span> <span class="kc">False</span>
+                                    <span class="k">if</span> <span class="n">cmd</span> <span class="o">==</span> <span class="mi">246</span><span class="p">:</span>  <span class="c1"># Determine if we have been commanded to shut down.</span>
+                                        <span class="n">post</span> <span class="o">=</span> <span class="kc">True</span>
+                                        <span class="n">ack_payload</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">suffix</span>
+                                    <span class="k">else</span><span class="p">:</span>
+                                        <span class="n">ack_payload</span> <span class="o">=</span> <span class="k">await</span> <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ack_payload</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+                                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR: callback results should have exactly three members, not&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ack_payload</span><span class="p">))</span>
+                                            <span class="k">raise</span> <span class="ne">ValueError</span>
+                                        <span class="n">ack_payload</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">ack_payload</span> <span class="o">+</span> <span class="n">suffix</span>
+                                    <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span>  <span class="c1"># Send command ACK.</span>
+                                        <span class="mi">77</span><span class="p">,</span>
+                                        <span class="n">ack_payload</span><span class="p">,</span>
+                                        <span class="n">s_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">,</span>
+                                        <span class="n">c_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">component_id</span>
+                                    <span class="p">)</span>
+                                    <span class="k">if</span> <span class="n">post</span><span class="p">:</span>  <span class="c1"># If the command is shutdown/restart, execute after the ack has been sent.</span>
+                                        <span class="k">await</span> <span class="n">callback</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                                <span class="k">elif</span> <span class="n">debug</span><span class="p">:</span>
+                                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;received command&#39;</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="s1">&#39;without format definition&#39;</span><span class="p">)</span>
+                                <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0018</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="MavLink.heartbeat_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.heartbeat_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">heartbeat_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Wait for heartbeat packet.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Listen for the heartbeat.</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">heartbeat</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">debug</span><span class="p">)</span>  <span class="c1"># noqa</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">(</span><span class="n">removals</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Quiet further messages.</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="MavLink.ack_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.ack_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">ack_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will wait for a command ACK up to a specific timeout.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">77</span><span class="p">])</span>  <span class="c1"># Listen for the ACK.</span>
         <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">command_id</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>  <span class="c1"># noqa</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">(</span><span class="n">removals</span><span class="o">=</span><span class="p">[</span><span class="mi">77</span><span class="p">])</span>  <span class="c1"># Quiet further messages.</span>
         <span class="k">return</span> <span class="n">result</span></div>
 
 <div class="viewcode-block" id="MavLink.send_message"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.send_message">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">send_message</span><span class="p">(</span>
@@ -614,7 +672,7 @@
             <span class="n">c_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;cfl&#39;</span><span class="p">],</span>
             <span class="n">i_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;ifl&#39;</span><span class="p">],</span>
             <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Packet</span><span class="p">:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="n">Packet</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Send a command with a 7 byte payload and wait for ACK.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -651,6 +709,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">retries</span> <span class="o">=</span> <span class="mi">10</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">confirmation</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ack</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">()</span>  <span class="c1"># Quiet further messages.</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ack</span></div>
 
 <div class="viewcode-block" id="MavLink.receive"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.receive">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -681,7 +740,6 @@
             <span class="k">global</span> <span class="n">TERM</span>
             <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
                 <span class="n">read_buffer</span> <span class="o">=</span> <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">crc_check</span><span class="p">,</span> <span class="n">_debug</span><span class="p">)</span>
-                <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">write_loop</span><span class="p">():</span>
             <span class="sd">&quot;&quot;&quot;</span>
@@ -690,6 +748,8 @@
             <span class="k">global</span> <span class="n">TERM</span>
             <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
                 <span class="k">await</span> <span class="n">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">_debug</span><span class="p">)</span>
+                <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+                <span class="c1"># print(&quot;MEMORY ALLOCATED&quot;, gc.mem_alloc(), len(formats))</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">heartbeat_loop</span><span class="p">():</span>
             <span class="sd">&quot;&quot;&quot;</span>
@@ -752,7 +812,6 @@
             <span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
             <span class="n">debug</span><span class="o">=</span><span class="kc">True</span>
         <span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">----------------------------- IF YOU SEE THIS THERE HAS BEEN AN ERROR -----------------------------------</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
     <span class="k">async</span> <span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">uart_</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

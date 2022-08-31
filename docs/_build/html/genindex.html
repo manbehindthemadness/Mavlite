@@ -75,6 +75,7 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
  | <a href="#N"><strong>N</strong></a>
  | <a href="#P"><strong>P</strong></a>
@@ -99,6 +100,8 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/src.mavlite.html#src.mavlite.MavLink.ack_wait">ack_wait() (src.mavlite.MavLink method)</a>
 </li>
+      <li><a href="source/src.mavlite.html#src.mavlite.MavLink.allowed_messages">allowed_messages() (src.mavlite.MavLink method)</a>
+</li>
       <li><a href="source/src.uart.html#src.uart.UART.any">any() (src.uart.UART method)</a>
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.assemble">assemble() (src.mavlite.Packet method)</a>
@@ -109,6 +112,10 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="source/src.uart.html#src.uart.check_message">check_message() (in module src.uart)</a>
+</li>
+      <li><a href="source/src.uart.html#src.uart.check_sender">check_sender() (in module src.uart)</a>
+</li>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.cid">cid (src.mavlite.Packet attribute)</a>
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.Command">Command (class in src.mavlite)</a>
@@ -119,10 +126,10 @@
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.MavLink.confirmation">confirmation (src.mavlite.MavLink attribute)</a>
 </li>
-      <li><a href="source/src.mavlite.html#src.mavlite.Packet.crc">crc (src.mavlite.Packet attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="source/src.mavlite.html#src.mavlite.Packet.crc">crc (src.mavlite.Packet attribute)</a>
+</li>
       <li><a href="source/src.mavlite.html#src.mavlite.crc_check">crc_check() (in module src.mavlite)</a>
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.crc_extra">crc_extra (src.mavlite.Packet attribute)</a>
@@ -176,6 +183,14 @@
   </ul></td>
 </tr></table>
 
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="source/src.mavlite.html#src.mavlite.load_formats">load_formats() (in module src.mavlite)</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -183,8 +198,12 @@
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.MavLink">MavLink (class in src.mavlite)</a>
 </li>
+      <li><a href="source/src.uart.html#src.uart.messages">messages() (in module src.uart)</a>
+</li>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.mid">mid (src.mavlite.Packet attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     module
 
@@ -193,13 +212,9 @@
 </li>
         <li><a href="source/src.mavlite.html#module-src.mavlite">src.mavlite</a>
 </li>
-        <li><a href="source/src.MSGFormats.html#module-src.MSGFormats">src.MSGFormats</a>
-</li>
         <li><a href="source/src.uart.html#module-src.uart">src.uart</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/src.uart.html#src.uart.UART.mp">mp (src.uart.UART attribute)</a>
 </li>
   </ul></td>
@@ -268,10 +283,14 @@
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.MavLink.send_message">send_message() (src.mavlite.MavLink method)</a>
 </li>
+      <li><a href="source/src.uart.html#src.uart.senders">senders() (in module src.uart)</a>
+</li>
       <li><a href="source/src.uart.html#src.uart.UART.setbaudrate">setbaudrate() (src.uart.UART method)</a>
 </li>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.sid">sid (src.mavlite.Packet attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="source/src.mavlite.html#src.mavlite.Packet.sig">sig (src.mavlite.Packet attribute)</a>
 </li>
       <li>
@@ -281,20 +300,11 @@
         <li><a href="source/src.html#module-src">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     src.mavlite
 
       <ul>
         <li><a href="source/src.mavlite.html#module-src.mavlite">module</a>
-</li>
-      </ul></li>
-      <li>
-    src.MSGFormats
-
-      <ul>
-        <li><a href="source/src.MSGFormats.html#module-src.MSGFormats">module</a>
 </li>
       </ul></li>
       <li>

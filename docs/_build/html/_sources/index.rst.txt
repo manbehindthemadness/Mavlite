@@ -532,12 +532,12 @@ Notes
 
 **Known issues**
 
-* Read loop needs serious optimization.
+* Read loop needs serious optimization. - implemented, in testing
 * A request-command/receive method has not yet been implemented.
 
 **Future plans**
 
-* Optimize read performance.
+* Optimize read performance. - implemented, in testing
 * Accelerate code using C-extensions where possible.
 * Add custom XML dialog functionality.
 * Add request-command/receive functionality.

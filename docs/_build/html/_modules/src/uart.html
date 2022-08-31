@@ -76,6 +76,24 @@
     <span class="kn">import</span> <span class="nn">uasyncio</span> <span class="k">as</span> <span class="nn">asyncio</span>  <span class="c1"># noqa</span>
 
 <span class="n">magic</span> <span class="o">=</span> <span class="p">[</span><span class="mi">253</span><span class="p">]</span>
+<span class="n">TERM</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">stream</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">packets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">read_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="n">write_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+
+<span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">8</span>
+
+
+<span class="n">VALID_SENDERS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+<span class="p">]</span>
+<span class="n">VALID_MESSAGES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="mi">0</span><span class="p">,</span>
+    <span class="mi">76</span><span class="p">,</span>
+    <span class="mi">77</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="UART"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.UART">[docs]</a><span class="k">class</span> <span class="nc">UART</span><span class="p">:</span>
@@ -180,27 +198,65 @@
         <span class="k">return</span> <span class="n">result</span></div></div>
 
 
-<span class="n">TERM</span> <span class="o">=</span> <span class="kc">False</span>
-<span class="n">stream</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="n">packets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="n">read_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="n">write_buffer</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<div class="viewcode-block" id="messages"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.messages">[docs]</a><span class="k">def</span> <span class="nf">messages</span><span class="p">(</span><span class="n">valid_messages</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allows to drop unneeded message packets to save cycles.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">VALID_MESSAGES</span>
+    <span class="n">VALID_MESSAGES</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">valid_messages</span><span class="p">:</span>
+        <span class="n">VALID_MESSAGES</span> <span class="o">=</span> <span class="n">valid_messages</span>
+    <span class="k">return</span> <span class="n">VALID_MESSAGES</span></div>
 
 
-<span class="n">buffer_size</span> <span class="o">=</span> <span class="mi">8</span>
+<div class="viewcode-block" id="check_message"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.check_message">[docs]</a><span class="k">def</span> <span class="nf">check_message</span><span class="p">(</span><span class="n">message_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cecks to see if we should keep the message, or drop it to save memory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">VALID_MESSAGES</span>
+    <span class="k">return</span> <span class="n">message_id</span> <span class="ow">in</span> <span class="n">VALID_MESSAGES</span></div>
 
 
-<div class="viewcode-block" id="uart_read"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.uart_read">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+<div class="viewcode-block" id="senders"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.senders">[docs]</a><span class="k">def</span> <span class="nf">senders</span><span class="p">(</span><span class="n">valid_senders</span><span class="p">:</span> <span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allows us to set the criteria for messages we will include in the read buffer.</span>
+
+<span class="sd">    The idea here is to allow conditional packet reception so, we don&#39;t bother decoding packets that aren&#39;t relevant.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">VALID_SENDERS</span>
+    <span class="n">VALID_SENDERS</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">valid_senders</span><span class="p">:</span>
+        <span class="n">VALID_SENDERS</span> <span class="o">=</span> <span class="n">valid_senders</span>
+    <span class="k">return</span> <span class="n">VALID_SENDERS</span></div>
+
+
+<div class="viewcode-block" id="check_sender"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.check_sender">[docs]</a><span class="k">def</span> <span class="nf">check_sender</span><span class="p">(</span><span class="n">packet</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Used to determine if we should drop a packet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">VALID_SENDERS</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sender</span> <span class="o">=</span> <span class="n">packet</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">packet</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">sender</span> <span class="ow">in</span> <span class="n">VALID_SENDERS</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;unable to check sender on partial packet&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="uart_read"><a class="viewcode-back" href="../../source/src.uart.html#src.uart.uart_read">[docs]</a><span class="k">async</span> <span class="k">def</span> <span class="nf">uart_read</span><span class="p">(</span>
+        <span class="n">_uart</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">callback</span><span class="p">:</span> <span class="nb">any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Uart packet listener.</span>
-
-<span class="sd">    TODO: This needs to take into account message includes so we don&#39;t spend all this processing time decoding every</span>
-<span class="sd">            packet.</span>
-
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">global</span> <span class="n">stream</span>
     <span class="k">global</span> <span class="n">packets</span>
     <span class="k">global</span> <span class="n">read_buffer</span>
+    <span class="k">global</span> <span class="n">VALID_SENDERS</span>
+
     <span class="n">partial_buff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
     <span class="n">raw</span> <span class="o">=</span> <span class="k">await</span> <span class="n">_uart</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">raw</span><span class="p">:</span>
@@ -208,7 +264,7 @@
         <span class="n">skip</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">if</span> <span class="n">data</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">byte</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))):</span>
-                <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">byte</span><span class="p">]</span> <span class="ow">in</span> <span class="n">magic</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip</span><span class="p">:</span>  <span class="c1"># Check for start condition.</span>
+                <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">byte</span><span class="p">]</span> <span class="o">==</span> <span class="mi">253</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">skip</span><span class="p">:</span>  <span class="c1"># Check for start condition.</span>
                     <span class="k">try</span><span class="p">:</span>  <span class="c1"># Don&#39;t check for another magic byte until after the end of this packet.</span>
                         <span class="n">p_len</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
                         <span class="n">min_length</span> <span class="o">=</span> <span class="mi">12</span> <span class="o">+</span> <span class="n">p_len</span>
@@ -218,9 +274,15 @@
                         <span class="k">pass</span>
                     <span class="k">if</span> <span class="n">stream</span><span class="p">:</span>  <span class="c1"># If we have a large partial stored from the last read iteration, finish it.</span>
                         <span class="n">stream</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
-                        <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">check_sender</span><span class="p">(</span><span class="n">stream</span><span class="p">,</span> <span class="n">debug</span><span class="p">):</span>
+                            <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">debug</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;skipping packet&#39;</span><span class="p">,</span> <span class="n">stream</span><span class="p">)</span>
                     <span class="k">elif</span> <span class="n">partial_buff</span><span class="p">:</span>  <span class="c1"># If the packets are smaller than the read buffer, handle them independently.</span>
-                        <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">check_sender</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">,</span> <span class="n">debug</span><span class="p">):</span>
+                            <span class="n">packets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">partial_buff</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">debug</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;skipping packet&#39;</span><span class="p">,</span> <span class="n">partial_buff</span><span class="p">)</span>
                     <span class="n">partial_buff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
                     <span class="n">stream</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
                 <span class="n">partial_buff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">byte</span><span class="p">])</span>
@@ -236,6 +298,11 @@
                                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;--------------------&#39;</span><span class="p">)</span>
                             <span class="k">try</span><span class="p">:</span>
                                 <span class="n">message_id</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s2">&quot;H&quot;</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">9</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="k">if</span> <span class="ow">not</span> <span class="n">check_message</span><span class="p">(</span><span class="n">message_id</span><span class="p">):</span>
+                                    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;dropping excluded message&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                                    <span class="k">del</span> <span class="n">packets</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>  <span class="c1"># Clear memory.</span>
+                                    <span class="k">break</span>
                             <span class="k">except</span> <span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                                 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Unable to unpack message_id&#39;</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">p</span><span class="p">[</span><span class="mi">7</span><span class="p">:</span><span class="mi">9</span><span class="p">])</span>
                                 <span class="k">del</span> <span class="n">packets</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>  <span class="c1"># Clear memory.</span>

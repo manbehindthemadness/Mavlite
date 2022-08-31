@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   src.MSGFormats
    src.mavlite
    src.uart
 
