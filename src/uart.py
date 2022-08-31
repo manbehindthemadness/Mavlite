@@ -181,6 +181,9 @@ async def uart_read(
 ) -> list:
     """
     Uart packet listener.
+
+    TODO: This needs to be enhanced to use the packet length byte to read variable lengths of whole packets from the
+            RX buffer instead of constantly iterating through every single byte.
     """
     global stream
     global packets
