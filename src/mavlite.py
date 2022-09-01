@@ -348,79 +348,6 @@ class Packet:
         return read_buffer
 
 
-class Heartbeat:
-    """
-    Send a heartbeat packet.
-    """
-
-    packet = Packet()
-
-    def __init__(self):
-        self.type = None
-
-    @staticmethod
-    async def wait(debug: bool = False) -> True:
-        """
-        Waits for a heartbeat.
-        """
-        beat = False
-        hold = False
-        now = monotonic()
-        timeout = now + 1
-        while not beat and not TERM:
-            for idx, message in enumerate(read_buffer):
-                if message['message_id'] == 0:
-                    hold = message['increment']
-                    del read_buffer[idx]
-                    if debug:
-                        print('\n\n\n\nfound heartbeat **************************************************************************\n\n\n\n')
-                await asyncio.sleep(0.00013)
-            if hold:
-                beat = hold
-            if timeout < now:
-                print('\n\n\n\nwarning heartbeat timed out **************************************************************************\n\n\n\n')
-                break
-            await asyncio.sleep(0.0013)
-        return beat
-
-
-class Command:
-    """
-    This will allow us to send commands and read the ACK.
-    """
-
-    packet = Packet()
-
-    def __init__(self, s_id: int, c_id: int):
-        self.s_id = s_id
-        self.c_id = c_id
-
-    @staticmethod
-    async def wait(cmd_id: int, debug: bool = False):
-        """
-        This will wait for our command ACK response.
-        """
-        global read_buffer
-        ack = False
-        now = monotonic()
-        timeout = now + 1
-        while not ack and not TERM:
-            for idx, message in enumerate(read_buffer):
-                if message['message_id'] == 77:
-                    if message['payload'] == [cmd_id]:
-                        ack = dict(read_buffer[idx])
-                        del read_buffer[idx]
-                        if debug:
-                            print('\n\n\n\nfound ACK **************************************************************************\n\n\n\n')
-                        break
-                await asyncio.sleep(0.00016)
-            if timeout < now:
-                if debug:
-                    print('\n\n\n\nwarning ACK timed out **************************************************************************\n\n\n\n')
-            await asyncio.sleep(0.0011)
-        return ack
-
-
 class MavLink:
     """
     This is where it all comes together babah.
@@ -450,6 +377,25 @@ class MavLink:
 
     confirmation = 0
 
+    runtime = {
+        'write_loop': {
+            'running': False,
+            'should_exit': False
+        },
+        'read_loop': {
+            'running': False,
+            'should_exit': False
+        },
+        'heartbeat_loop': {
+            'running': False,
+            'should_exit': False
+        },
+        'command_listener': {
+            'running': False,
+            'should_exit': False
+        }
+    }
+
     def __init__(
             self,
             message_ids: list,
@@ -475,9 +421,7 @@ class MavLink:
             if f not in message_ids:
                 del formats[f]
         self.message_ids = message_ids
-        self.heartbeat = Heartbeat()
         self.packet = Packet()
-        self.command = Command(s_id, c_id)
 
         self.retries = retries
 
@@ -501,12 +445,14 @@ class MavLink:
         self.messages(self.valid_messages)
         return self
 
-    async def command_parser(self, debug: bool = False):
+    async def command_parser(self, debug: bool = False, _uart: UART = None):
         """
         This will collect incoming commands and fire off their respective callbacks.
         """
         self.allowed_messages([76])  # Ensure we are listening for command packets.
         global read_buffer
+        if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
+            read_buffer = await uart_read(_uart, crc_check, debug)
         if len(read_buffer):
             for idx, p in enumerate(read_buffer):
                 if p['message_id'] == 76:  # Check if the message is a command.
@@ -547,23 +493,66 @@ class MavLink:
                                 del read_buffer[idx]
         await asyncio.sleep(0.0018)
 
-    async def heartbeat_wait(self, debug: bool = False):
+    async def heartbeat_wait(self, debug: bool = False, _uart: UART = None):
         """
         Wait for heartbeat packet.
         """
+        global read_buffer
         self.allowed_messages([0])  # Listen for the heartbeat.
-        result = await self.heartbeat.wait(debug)  # noqa
+        beat = False
+        hold = False
+        now = monotonic()
+        timeout = now + 1
+        while not beat and not TERM:
+            if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
+                read_buffer = await uart_read(_uart, crc_check, debug)
+            for idx, message in enumerate(read_buffer):
+                if message['message_id'] == 0:
+                    hold = message['increment']
+                    del read_buffer[idx]
+                    if debug:
+                        print(
+                            '\n\n\n\nfound heartbeat **************************************************************************\n\n\n\n')
+                await asyncio.sleep(0.00013)
+            if hold:
+                beat = hold
+            if timeout < now:
+                print(
+                    '\n\n\n\nwarning heartbeat timed out **************************************************************************\n\n\n\n')
+                break
+            await asyncio.sleep(0.0013)
         self.allowed_messages(removals=[0])  # Quiet further messages.
-        return result
+        return beat
 
-    async def ack_wait(self, command_id: int, debug: bool = False):
+    async def ack_wait(self, command_id: int, debug: bool = False, _uart: UART = None):
         """
         This will wait for a command ACK up to a specific timeout.
         """
+        global read_buffer
+        if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
+            read_buffer = await uart_read(_uart, crc_check, debug)
         self.allowed_messages([77])  # Listen for the ACK.
-        result = await self.command.wait(command_id, debug)  # noqa
+        ack = False
+        now = monotonic()
+        timeout = now + 1
+        while not ack and not TERM:
+            for idx, message in enumerate(read_buffer):
+                if message['message_id'] == 77:
+                    if message['payload'] == [command_id]:
+                        ack = dict(read_buffer[idx])
+                        del read_buffer[idx]
+                        if debug:
+                            print(
+                                '\n\n\n\nfound ACK **************************************************************************\n\n\n\n')
+                        break
+                await asyncio.sleep(0.00016)
+            if timeout < now:
+                if debug:
+                    print(
+                        '\n\n\n\nwarning ACK timed out **************************************************************************\n\n\n\n')
+            await asyncio.sleep(0.0011)
         self.allowed_messages(removals=[77])  # Quiet further messages.
-        return result
+        return ack
 
     async def send_message(
             self,
@@ -573,7 +562,8 @@ class MavLink:
             c_id: int = defs['cid'],
             c_flags: int = defs['cfl'],
             i_flags: int = defs['ifl'],
-            debug: bool = False  # noqa
+            debug: bool = False,  # noqa
+            _uart: UART = None
     ) -> Packet:
         """
         Formats an outgoing message into a Mavlink packet.
@@ -587,7 +577,10 @@ class MavLink:
                 s_id,
                 c_id
             )
-            return await self.packet.send()
+            result = await self.packet.send()
+            if not self.runtime['write_loop']['running'] and _uart is not None:  # Perform a write in the event the loop isn't running.
+                await uart_write(_uart, debug)
+            return result
         except KeyError as err:
             print(err, '\nUnable to locate command ID, please check includes and definitions')
 
@@ -601,11 +594,13 @@ class MavLink:
             c_id: int = defs['cid'],
             c_flags: int = defs['cfl'],
             i_flags: int = defs['ifl'],
-            debug: bool = False
+            debug: bool = False,
+            _uart: UART = None
     ) -> [Packet, None]:
         """
         Send a command with a 7 byte payload and wait for ACK.
         """
+        self.allowed_messages([77])  # Listen for the ACK.
         payload = [target_system, target_component, command_id, self.confirmation]
         payload.extend(list(params))
         await self.packet.create_packet(
@@ -617,6 +612,9 @@ class MavLink:
             c_id=c_id
         )
         await self.packet.send()
+        if not self.runtime['write_loop']['running'] and _uart is not None:  # Perform a write in the event the loop isn't running.
+            await uart_write(_uart, debug)
+            gc.collect()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
             self.ack = await self.ack_wait(command_id, debug)  # noqa
             if not self.ack and self.retries:
@@ -642,18 +640,6 @@ class MavLink:
             self.messages()  # Quiet further messages.
         return self.ack
 
-    async def receive(self):
-        """
-        Read from the incoming buffer... We need to break this out into receive_message and receive_command.
-
-        decode COMMAND_ACK: struct.unpack("<HBBiBB", bytes(payload))
-
-        | command | result | progress | result_param2 | target_system | target_component |
-
-        https://mavlink.io/en/messages/common.html#MAV_RESULT
-        """
-        return await self.packet.receive()
-
     async def io_buffers(self, uart: any, debug: bool = False):
         """
         This will return the tasks required to handle UART I/O via our read and write buffers.
@@ -668,35 +654,47 @@ class MavLink:
             """
             global read_buffer
             global TERM
-            while not TERM:
+            parent.runtime['read_loop']['running'] = True
+            while not TERM and not parent.runtime['read_loop']['should_exit']:
                 read_buffer = await uart_read(_uart, crc_check, _debug)
+            parent.runtime['read_loop']['should_exit'] = False
+            parent.runtime['read_loop']['running'] = False
 
         async def write_loop():
             """
             Write loop.
             """
             global TERM
-            while not TERM:
+            parent.runtime['write_loop']['running'] = True
+            while not TERM and not parent.runtime['write_loop']['should_exit']:
                 await uart_write(_uart, _debug)
                 gc.collect()
                 # print("MEMORY ALLOCATED", gc.mem_alloc(), len(formats))
+            parent.runtime['write_loop']['should_exit'] = False
+            parent.runtime['write_loop']['running'] = False
 
         async def heartbeat_loop():
             """
             Let's send some heartbeat packets.
             """
             global TERM
-            while not TERM:
+            parent.runtime['heartbeat_loop']['running'] = True
+            while not TERM and not parent.runtime['heartbeat_loop']['should_exit']:
                 await parent.send_message(0, self.heartbeat_payload, c_flags=0, i_flags=0, s_id=self.system_id, c_id=self.component_id)
                 await asyncio.sleep(1)
+            parent.runtime['heartbeat_loop']['should_exit'] = False
+            parent.runtime['heartbeat_loop']['running'] = False
 
         async def command_loop():
             """
             Listen for incoming commands.
             """
             global TERM
-            while not TERM:
+            parent.runtime['command_listener']['running'] = True
+            while not TERM and not parent.runtime['command_listener']['should_exit']:
                 await parent.command_parser(_debug)
+            parent.runtime['command_listener']['should_exit'] = False
+            parent.runtime['command_listener']['running'] = False
 
         result = [
             write_loop(),

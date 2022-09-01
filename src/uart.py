@@ -19,11 +19,7 @@ buffer_size = 8
 VALID_SENDERS = [
     (1, 1),
 ]
-VALID_MESSAGES = [
-    0,
-    76,
-    77
-]
+VALID_MESSAGES = list()
 
 
 class UART:
@@ -181,8 +177,10 @@ async def none_wait(callback, *args):
     """
     Waits for the variable condition to not be none and then returns the result
     """
+    global VALID_SENDERS
+    global VALID_MESSAGES
     condition = None
-    while condition is None:
+    while condition is None and [len(VALID_MESSAGES), len(VALID_SENDERS)] != [0, 0]:
         condition = await callback(*args)
         await asyncio.sleep(0.0015)
     return condition
