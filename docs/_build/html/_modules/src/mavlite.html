@@ -100,7 +100,7 @@
     <span class="kn">from</span> <span class="nn">uart</span> <span class="kn">import</span> <span class="p">(</span>
         <span class="n">senders</span><span class="p">,</span>
         <span class="n">messages</span><span class="p">,</span>
-        <span class="n">uart_read</span><span class="p">,</span>
+        <span class="n">uart_read_2</span> <span class="k">as</span> <span class="n">uart_read</span><span class="p">,</span>
         <span class="n">uart_write</span><span class="p">,</span>
         <span class="n">write_buffer</span><span class="p">,</span>
         <span class="n">UART</span>
@@ -109,7 +109,7 @@
     <span class="kn">from</span> <span class="nn">.uart</span> <span class="kn">import</span> <span class="p">(</span>
         <span class="n">senders</span><span class="p">,</span>
         <span class="n">messages</span><span class="p">,</span>
-        <span class="n">uart_read</span><span class="p">,</span>
+        <span class="n">uart_read_2</span> <span class="k">as</span> <span class="n">uart_read</span><span class="p">,</span>
         <span class="n">uart_write</span><span class="p">,</span>
         <span class="n">write_buffer</span><span class="p">,</span>
         <span class="n">UART</span>
@@ -418,79 +418,6 @@
         <span class="k">return</span> <span class="n">read_buffer</span></div></div>
 
 
-<div class="viewcode-block" id="Heartbeat"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.Heartbeat">[docs]</a><span class="k">class</span> <span class="nc">Heartbeat</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Send a heartbeat packet.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="kc">None</span>
-
-<div class="viewcode-block" id="Heartbeat.wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.Heartbeat.wait">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Waits for a heartbeat.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">beat</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">hold</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">now</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="n">beat</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">hold</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;increment&#39;</span><span class="p">]</span>
-                    <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">found heartbeat **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.00013</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">hold</span><span class="p">:</span>
-                <span class="n">beat</span> <span class="o">=</span> <span class="n">hold</span>
-            <span class="k">if</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">warning heartbeat timed out **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                <span class="k">break</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0013</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">beat</span></div></div>
-
-
-<div class="viewcode-block" id="Command"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.Command">[docs]</a><span class="k">class</span> <span class="nc">Command</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This will allow us to send commands and read the ACK.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">c_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">s_id</span> <span class="o">=</span> <span class="n">s_id</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">c_id</span> <span class="o">=</span> <span class="n">c_id</span>
-
-<div class="viewcode-block" id="Command.wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.Command.wait">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">async</span> <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="n">cmd_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        This will wait for our command ACK response.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">global</span> <span class="n">read_buffer</span>
-        <span class="n">ack</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="n">now</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
-        <span class="n">timeout</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="mi">1</span>
-        <span class="k">while</span> <span class="ow">not</span> <span class="n">ack</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
-                <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">77</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">cmd_id</span><span class="p">]:</span>
-                        <span class="n">ack</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
-                        <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-                        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-                            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">found ACK **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
-                        <span class="k">break</span>
-                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.00016</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">warning ACK timed out **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
-            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0011</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ack</span></div></div>
-
-
 <div class="viewcode-block" id="MavLink"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink">[docs]</a><span class="k">class</span> <span class="nc">MavLink</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This is where it all comes together babah.</span>
@@ -520,6 +447,25 @@
 
     <span class="n">confirmation</span> <span class="o">=</span> <span class="mi">0</span>
 
+    <span class="n">runtime</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;write_loop&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;running&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;should_exit&#39;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;read_loop&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;running&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;should_exit&#39;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;heartbeat_loop&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;running&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;should_exit&#39;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">},</span>
+        <span class="s1">&#39;command_listener&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;running&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;should_exit&#39;</span><span class="p">:</span> <span class="kc">False</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
             <span class="n">message_ids</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
@@ -545,9 +491,7 @@
             <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">message_ids</span><span class="p">:</span>
                 <span class="k">del</span> <span class="n">formats</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message_ids</span> <span class="o">=</span> <span class="n">message_ids</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">heartbeat</span> <span class="o">=</span> <span class="n">Heartbeat</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">packet</span> <span class="o">=</span> <span class="n">Packet</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">Command</span><span class="p">(</span><span class="n">s_id</span><span class="p">,</span> <span class="n">c_id</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">retries</span> <span class="o">=</span> <span class="n">retries</span>
 
@@ -571,12 +515,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">valid_messages</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-<div class="viewcode-block" id="MavLink.command_parser"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.command_parser">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">command_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="MavLink.command_parser"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.command_parser">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">command_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_uart</span><span class="p">:</span> <span class="n">UART</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will collect incoming commands and fire off their respective callbacks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">76</span><span class="p">])</span>  <span class="c1"># Ensure we are listening for command packets.</span>
         <span class="k">global</span> <span class="n">read_buffer</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_uart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Perform a read in the event the loop isn&#39;t running.</span>
+            <span class="n">read_buffer</span> <span class="o">=</span> <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">crc_check</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">p</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">76</span><span class="p">:</span>  <span class="c1"># Check if the message is a command.</span>
@@ -617,23 +563,66 @@
                                 <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0018</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="MavLink.heartbeat_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.heartbeat_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">heartbeat_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="MavLink.heartbeat_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.heartbeat_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">heartbeat_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_uart</span><span class="p">:</span> <span class="n">UART</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Wait for heartbeat packet.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">read_buffer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Listen for the heartbeat.</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">heartbeat</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">debug</span><span class="p">)</span>  <span class="c1"># noqa</span>
+        <span class="n">beat</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">hold</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">beat</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_uart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Perform a read in the event the loop isn&#39;t running.</span>
+                <span class="n">read_buffer</span> <span class="o">=</span> <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">crc_check</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">hold</span> <span class="o">=</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;increment&#39;</span><span class="p">]</span>
+                    <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span>
+                            <span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">found heartbeat **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.00013</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hold</span><span class="p">:</span>
+                <span class="n">beat</span> <span class="o">=</span> <span class="n">hold</span>
+            <span class="k">if</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">warning heartbeat timed out **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0013</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">(</span><span class="n">removals</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># Quiet further messages.</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">beat</span></div>
 
-<div class="viewcode-block" id="MavLink.ack_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.ack_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">ack_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="MavLink.ack_wait"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.ack_wait">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">ack_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">_uart</span><span class="p">:</span> <span class="n">UART</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will wait for a command ACK up to a specific timeout.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">read_buffer</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_uart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Perform a read in the event the loop isn&#39;t running.</span>
+            <span class="n">read_buffer</span> <span class="o">=</span> <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">crc_check</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">77</span><span class="p">])</span>  <span class="c1"># Listen for the ACK.</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">command</span><span class="o">.</span><span class="n">wait</span><span class="p">(</span><span class="n">command_id</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>  <span class="c1"># noqa</span>
+        <span class="n">ack</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="n">monotonic</span><span class="p">()</span>
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">ack</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">message</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;message_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">77</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">message</span><span class="p">[</span><span class="s1">&#39;payload&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="n">command_id</span><span class="p">]:</span>
+                        <span class="n">ack</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+                        <span class="k">del</span> <span class="n">read_buffer</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span>
+                                <span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">found ACK **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="k">break</span>
+                <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.00016</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">timeout</span> <span class="o">&lt;</span> <span class="n">now</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1">warning ACK timed out **************************************************************************</span><span class="se">\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0011</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">(</span><span class="n">removals</span><span class="o">=</span><span class="p">[</span><span class="mi">77</span><span class="p">])</span>  <span class="c1"># Quiet further messages.</span>
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">ack</span></div>
 
 <div class="viewcode-block" id="MavLink.send_message"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.send_message">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">send_message</span><span class="p">(</span>
             <span class="bp">self</span><span class="p">,</span>
@@ -643,7 +632,8 @@
             <span class="n">c_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;cid&#39;</span><span class="p">],</span>
             <span class="n">c_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;cfl&#39;</span><span class="p">],</span>
             <span class="n">i_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;ifl&#39;</span><span class="p">],</span>
-            <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># noqa</span>
+            <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># noqa</span>
+            <span class="n">_uart</span><span class="p">:</span> <span class="n">UART</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Packet</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Formats an outgoing message into a Mavlink packet.</span>
@@ -657,7 +647,10 @@
                 <span class="n">s_id</span><span class="p">,</span>
                 <span class="n">c_id</span>
             <span class="p">)</span>
-            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_uart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Perform a write in the event the loop isn&#39;t running.</span>
+                <span class="k">await</span> <span class="n">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span>
         <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Unable to locate command ID, please check includes and definitions&#39;</span><span class="p">)</span></div>
 
@@ -671,11 +664,13 @@
             <span class="n">c_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;cid&#39;</span><span class="p">],</span>
             <span class="n">c_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;cfl&#39;</span><span class="p">],</span>
             <span class="n">i_flags</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">defs</span><span class="p">[</span><span class="s1">&#39;ifl&#39;</span><span class="p">],</span>
-            <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="n">_uart</span><span class="p">:</span> <span class="n">UART</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[</span><span class="n">Packet</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Send a command with a 7 byte payload and wait for ACK.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_messages</span><span class="p">([</span><span class="mi">77</span><span class="p">])</span>  <span class="c1"># Listen for the ACK.</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_system</span><span class="p">,</span> <span class="n">target_component</span><span class="p">,</span> <span class="n">command_id</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">confirmation</span><span class="p">]</span>
         <span class="n">payload</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet</span><span class="o">.</span><span class="n">create_packet</span><span class="p">(</span>
@@ -687,6 +682,9 @@
             <span class="n">c_id</span><span class="o">=</span><span class="n">c_id</span>
         <span class="p">)</span>
         <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">_uart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Perform a write in the event the loop isn&#39;t running.</span>
+            <span class="k">await</span> <span class="n">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>
+            <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">target_system</span> <span class="o">!=</span> <span class="mi">255</span><span class="p">:</span>  <span class="c1"># Skip ACK wait for broadcast messages.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ack</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">ack_wait</span><span class="p">(</span><span class="n">command_id</span><span class="p">,</span> <span class="n">debug</span><span class="p">)</span>  <span class="c1"># noqa</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">ack</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">retries</span><span class="p">:</span>
@@ -712,18 +710,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">messages</span><span class="p">()</span>  <span class="c1"># Quiet further messages.</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ack</span></div>
 
-<div class="viewcode-block" id="MavLink.receive"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.receive">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">receive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Read from the incoming buffer... We need to break this out into receive_message and receive_command.</span>
-
-<span class="sd">        decode COMMAND_ACK: struct.unpack(&quot;&lt;HBBiBB&quot;, bytes(payload))</span>
-
-<span class="sd">        | command | result | progress | result_param2 | target_system | target_component |</span>
-
-<span class="sd">        https://mavlink.io/en/messages/common.html#MAV_RESULT</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">packet</span><span class="o">.</span><span class="n">receive</span><span class="p">()</span></div>
-
 <div class="viewcode-block" id="MavLink.io_buffers"><a class="viewcode-back" href="../../source/src.mavlite.html#src.mavlite.MavLink.io_buffers">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">io_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uart</span><span class="p">:</span> <span class="nb">any</span><span class="p">,</span> <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        This will return the tasks required to handle UART I/O via our read and write buffers.</span>
@@ -738,35 +724,47 @@
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">global</span> <span class="n">read_buffer</span>
             <span class="k">global</span> <span class="n">TERM</span>
-            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]:</span>
                 <span class="n">read_buffer</span> <span class="o">=</span> <span class="k">await</span> <span class="n">uart_read</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">crc_check</span><span class="p">,</span> <span class="n">_debug</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;read_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">write_loop</span><span class="p">():</span>
             <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Write loop.</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">global</span> <span class="n">TERM</span>
-            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]:</span>
                 <span class="k">await</span> <span class="n">uart_write</span><span class="p">(</span><span class="n">_uart</span><span class="p">,</span> <span class="n">_debug</span><span class="p">)</span>
                 <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
                 <span class="c1"># print(&quot;MEMORY ALLOCATED&quot;, gc.mem_alloc(), len(formats))</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;write_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">heartbeat_loop</span><span class="p">():</span>
             <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Let&#39;s send some heartbeat packets.</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">global</span> <span class="n">TERM</span>
-            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;heartbeat_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;heartbeat_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]:</span>
                 <span class="k">await</span> <span class="n">parent</span><span class="o">.</span><span class="n">send_message</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">heartbeat_payload</span><span class="p">,</span> <span class="n">c_flags</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">i_flags</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">s_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">system_id</span><span class="p">,</span> <span class="n">c_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">component_id</span><span class="p">)</span>
                 <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;heartbeat_loop&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;heartbeat_loop&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">async</span> <span class="k">def</span> <span class="nf">command_loop</span><span class="p">():</span>
             <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">            Listen for incoming commands.</span>
 <span class="sd">            &quot;&quot;&quot;</span>
             <span class="k">global</span> <span class="n">TERM</span>
-            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;command_listener&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">TERM</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;command_listener&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]:</span>
                 <span class="k">await</span> <span class="n">parent</span><span class="o">.</span><span class="n">command_parser</span><span class="p">(</span><span class="n">_debug</span><span class="p">)</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;command_listener&#39;</span><span class="p">][</span><span class="s1">&#39;should_exit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">runtime</span><span class="p">[</span><span class="s1">&#39;command_listener&#39;</span><span class="p">][</span><span class="s1">&#39;running&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="n">result</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">write_loop</span><span class="p">(),</span>
