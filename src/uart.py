@@ -1,5 +1,7 @@
 """# Write your code here :-)"""
 import struct
+from math import sqrt
+# import re
 try:
     import asyncio
 except ImportError:
@@ -14,12 +16,91 @@ write_buffer = list()
 
 
 buffer_size = 8
-
-
+variance = list()
+assignments = list()
 VALID_SENDERS = [
     (1, 1),
 ]
 VALID_MESSAGES = list()
+
+
+class Equalizer:
+    """
+    This will issue unique task-delay values in the form of prime numbers.
+    """
+    def __init__(self, spread: int = 100):
+        global variance
+        global assignments
+        self.spread = spread
+        self.get_primes()
+
+    @staticmethod
+    def isprime(n):
+        """
+        Determines if a candidate is a prime number.
+        """
+        prime_flag = 0
+
+        if n > 1:
+            for i in range(2, int(sqrt(n)) + 1):
+                if n % i == 0:
+                    prime_flag = 1
+                    break
+            if prime_flag == 0:
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    def get_primes(self):
+        """
+        Gets a unique prime delay times.
+        """
+        global variance
+        global assignments
+        for number in range(self.spread):
+            if self.isprime(number) and number not in variance:
+                variance.append(number / 10000)
+        if not assignments:
+            assignments = [0] * len(variance)
+        else:
+            variance_length = len(variance)
+            assignments.extend([0] * (len(assignments) - variance_length))
+        return self
+
+    @staticmethod
+    def assign(delay_var: [int, float] = 0, base: [int, float] = 0):
+        """
+        This will assign a unique delay time.
+        """
+        if not delay_var:
+            global assignments
+            result = None
+            for idx, (assignment, variant) in enumerate(zip(assignments, variance)):
+                if not assignment:
+                    result = variant
+                    assignments[idx] = 1
+                    break
+            if result is None:
+                print('Out of assignments, please increase variance spread')
+                print(variance)
+                print(assignments)
+                raise RuntimeError
+            result += base
+            delay_var = result
+        return delay_var
+
+    async def wait(self, delay_var: [int, float] = 0, base: [float, int] = 0):
+        """
+        Returns the wait action.
+        """
+        delay_var = self.assign(delay_var, base)
+        await asyncio.sleep(delay_var)
+        return delay_var
+
+
+waits = Equalizer()
 
 
 class UART:
@@ -173,17 +254,25 @@ def check_sender(packet: list, debug: bool = False) -> bool:
 has_start_point = False
 
 
+wait = 0
+
+
 async def none_wait(callback, *args):
     """
     Waits for the variable condition to not be none and then returns the result
     """
     global VALID_SENDERS
     global VALID_MESSAGES
+    global wait
     condition = None
+
     while condition is None and [len(VALID_MESSAGES), len(VALID_SENDERS)] != [0, 0]:
         condition = await callback(*args)
-        await asyncio.sleep(0.0015)
+        wait = await waits.wait(wait)
     return condition
+
+
+wait_1 = 0
 
 
 async def uart_read_2(
@@ -195,6 +284,7 @@ async def uart_read_2(
     A better uart packet listener.
     """
     packet_start, payload_length, packet, message_id, crc = [None] * 5
+    global wait_1
     global read_buffer
     global VALID_MESSAGES
     global VALID_SENDERS
@@ -203,7 +293,8 @@ async def uart_read_2(
         while not has_start_point:  # Find the start point inbetween packets.
             pointer = await none_wait(_uart.read, 1)
             pointer = int(list(pointer)[0])
-            await asyncio.sleep(0.5)
+            # await asyncio.sleep(0.5)
+            wait_1 = await waits.wait(wait_1)
             if pointer == 0xFD:
                 has_start_point = True
                 payload_length = await _uart.read(1)
@@ -234,9 +325,9 @@ async def uart_read_2(
             try:
                 if (packet[5], packet[6]) in VALID_SENDERS and message_id in VALID_MESSAGES:
                     excluded = False
-            except TypeError:
-                print('PACKET', packet)
-                raise TypeError
+            except (TypeError, IndexError):
+                if debug:
+                    print('dropping incomplete packet', packet)
             if not excluded:
                 pay_end = 10 + packet[1]
                 payload = packet[10:pay_end]
@@ -270,117 +361,15 @@ async def uart_read_2(
     return read_buffer
 
 
-# async def uart_read(
-#         _uart: any = None,
-#         callback: any = None,
-#         debug: bool = False
-# ) -> list:
-#     """
-#     Uart packet listener.
-#
-#     TODO: This needs to be enhanced to use the packet length byte to read variable lengths of whole packets from the
-#             RX buffer instead of constantly iterating through every single byte.
-#     """
-#     global stream
-#     global packets
-#     global read_buffer
-#
-#     partial_buff = list()
-#     raw = await _uart.read(64)
-#     if raw:
-#         data = list(raw)  # read up to 64 bytes
-#         skip = 0
-#         if data:
-#             for idx, byte in enumerate(range(len(data))):
-#                 if data[byte] == 253 and not skip:  # Check for start condition.
-#                     try:  # Don't check for another magic byte until after the end of this packet.
-#                         p_len = data[idx + 1]
-#                         min_length = 12 + p_len
-#                         # TODO: We will need to add 13 bytes here if the communication is signed.
-#                         skip = min_length
-#                     except IndexError:
-#                         pass
-#                     if stream:  # If we have a large partial stored from the last read iteration, finish it.
-#                         stream.extend(partial_buff)
-#                         if check_sender(stream, debug):
-#                             packets.append(stream)
-#                         elif debug:
-#                             print('skipping packet', stream)
-#                     elif partial_buff:  # If the packets are smaller than the read buffer, handle them independently.
-#                         if check_sender(partial_buff, debug):
-#                             packets.append(partial_buff)
-#                         elif debug:
-#                             print('skipping packet', partial_buff)
-#                     partial_buff = list()
-#                     stream = list()
-#                 partial_buff.append(data[byte])
-#                 if skip:
-#                     skip -= 1
-#                 await asyncio.sleep(0.0015)
-#             stream.extend(partial_buff)
-#             if len(packets):
-#                 for idx, p in enumerate(packets):
-#                     try:
-#                         if 12 <= len(p) <= 280:  # 12 is the minimum MavLink packet length.
-#                             if debug:
-#                                 print('--------------------')
-#                             try:
-#                                 message_id = struct.unpack("H", bytes(p[7:9]))[0]
-#                                 if not check_message(message_id):
-#                                     if debug:
-#                                         print('dropping excluded message', p)
-#                                     del packets[idx]  # Clear memory.
-#                                     break
-#                             except (RuntimeError, ValueError) as err:
-#                                 print('Unable to unpack message_id', err, '\n', p[7:9])
-#                                 del packets[idx]  # Clear memory.
-#                                 break
-#                             pay_end = 10 + p[1]
-#                             payload = p[10:pay_end]
-#                             try:  # Prevent a failure from snowballing into logic down the line.
-#                                 crc = struct.unpack("H", bytes(p[pay_end:pay_end + 2]))[0]
-#                             except RuntimeError as err:
-#                                 print(err, 'unable to decode crc\n', p, '\n', bytes(p))
-#                                 del packets[idx]  # Clear memory.
-#                                 break  # Prevent a failure from snowballing into logic down the line.
-#                             chk = p[1:pay_end]
-#
-#                             msg = f'start {p[0]}, length {p[1]}, incompat {p[2]}, compat {p[3]}, seq {p[4]}, sys_id {p[5]}, '
-#                             msg += f'comp_id {p[6]}, mes_id {message_id}, '
-#                             msg += f'payload {payload}, crc {crc}, \nraw {bytes(p)}'
-#                             pack = {
-#                                 'message_id': message_id,
-#                                 'system_id': p[5],
-#                                 'component_id': p[6],
-#                                 'payload': payload,
-#                                 'increment': p[4],
-#                                 'crc': crc,
-#                                 'chk': chk,
-#                                 'raw': bytes(p)
-#                             }
-#                             if callback:  # For CRC checking.
-#                                 if await callback(pack, debug):
-#                                     read_buffer.append(pack)
-#                             read_buffer = read_buffer[-buffer_size:]
-#                         else:
-#                             msg = f'dropping packet: {p}'
-#                             del packets[idx]  # Clear memory.
-#                     except IndexError:
-#                         msg = f'bad_data {p}'
-#                         del packets[idx]  # Clear memory.
-#                     if debug:
-#                         print('--------------------\n', 'receiving', msg)
-#                     await asyncio.sleep(0.002)
-#                 packets = list()
-#     else:
-#         await asyncio.sleep(0.001)
-#     return read_buffer
+wait_2 = wait_3 = 0
 
 
 async def uart_write(_uart: any, debug: bool = False):
     """
     Writes our buffer to the device
     """
+    global wait_2
+    global wait_3
     global write_buffer
     if len(write_buffer):
         for idx, packet in enumerate(write_buffer):
@@ -393,10 +382,10 @@ async def uart_write(_uart: any, debug: bool = False):
                 msg += f'\nraw {bytes(p)}'
                 print('--------------------\n', 'sending', msg)
             await _uart.write(bytes(packet))
-            del write_buffer[idx]
-            await asyncio.sleep(0.0017)
+            del write_buffer[idx]  # No delay here.
     else:
-        await asyncio.sleep(0.023)
+        # await asyncio.sleep(0.023)
+        wait_3 = await waits.wait(wait_3, 0.5)  # noqa THIS IS PERFORMANCE CRITICAL.
     return write_buffer
 
 
@@ -406,6 +395,9 @@ async def uart_io(_uart: any, callback: any = None, debug: bool = False):
     """
     await uart_write(_uart, debug)
     await uart_read_2(_uart, callback, debug)
+
+
+wait_4 = 0
 
 
 def test():
@@ -419,12 +411,14 @@ def test():
         """
         A while clause...
         """
+        global wait_4
         _uart = UART(tx=board.TX, rx=board.RX, baudrate=230400)
         while True:
             try:
                 await uart_io(_uart, debug=True)
             except KeyboardInterrupt:
                 break
-            await asyncio.sleep(0.00014)
+            # await asyncio.sleep(0.00014)
+            wait_4 = await waits.wait(wait_4)
 
     asyncio.run(loop())

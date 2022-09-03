@@ -28,6 +28,7 @@ except ImportError:
 
 try:
     from uart import (
+        waits,
         senders,
         messages,
         uart_read_2 as uart_read,
@@ -37,6 +38,7 @@ try:
     )
 except ImportError:
     from .uart import (
+        waits,
         senders,
         messages,
         uart_read_2 as uart_read,
@@ -83,12 +85,14 @@ def load_formats():
 
 
 formats = load_formats()
+wait = 0
 
 
 async def decode_payload(message_id: int, payload: list, format_override: [None, str] = None, debug: bool = False):
     """
     Uses the indexed format to decode the contents of an incoming payload.
     """
+    global wait
     if not format_override:
         _format = "<" + formats[message_id][0]
     else:
@@ -107,8 +111,13 @@ async def decode_payload(message_id: int, payload: list, format_override: [None,
         tmpPayload = payload[:]
         for i in range(0, len(payload)):
             payload[i] = tmpPayload[formats[message_id][2][i]]  # noqa
-            await asyncio.sleep(0.00021)
+            # await asyncio.sleep(0.00021)
+            wait = await waits.wait(wait)
+
     return payload
+
+
+wait_2 = 0
 
 
 class X25crc:
@@ -135,12 +144,14 @@ class X25crc:
         """
         Add in rolling byte-chunks.
         """
+        global wait_2
         accum = self.crc
         for b in buf:
             tmp = b ^ (accum & 0xff)
             tmp = (tmp ^ (tmp << 4)) & 0xFF
             accum = (accum >> 8) ^ (tmp << 8) ^ (tmp << 3) ^ (tmp >> 4)
-            await asyncio.sleep(0.0001)
+            # await asyncio.sleep(0.0001)
+            wait_2 = await waits.wait(wait_2)
         self.crc = accum
         return self
 
@@ -185,6 +196,9 @@ async def crc_check(pack: dict, debug: bool = False) -> bool:
         if debug:
             print('Skipping CRC for unincluded message_id', pack['message_id'])
     return result
+
+
+wait_3 = wait_4 = 0
 
 
 class Packet:
@@ -261,12 +275,14 @@ class Packet:
         """
         Strip nullbytes from payload.
         """
+        global wait_3
         if not isinstance(self.payload, bytes):
             raise TypeError
         self.p_len = len(self.payload)
         while self.p_len > 1 and self.payload[self.p_len - 1] == 0:
             self.p_len -= 1
-            await asyncio.sleep(0.0001)
+            # await asyncio.sleep(0.0001)
+            wait_3 = await waits.wait(wait_3)
         self.payload = self.payload[:self.p_len]
         return self
 
@@ -288,6 +304,7 @@ class Packet:
         """
         Pack the user payload according to the specified format.
         """
+        global wait_4
         _format = formats[message_id][0]
         if len(payload) != len(_format):
             print('payload malformed: expected', len(_format), 'arguments, received:', len(payload))
@@ -298,7 +315,8 @@ class Packet:
             tmpPayload = payload[:]
             for i in range(0, len(payload)):
                 payload[formats[message_id][2][i]] = tmpPayload[i]
-                await asyncio.sleep(0.00017)
+                # await asyncio.sleep(0.00017)
+                wait_4 = await waits.wait(wait_4)
         try:
             self.payload = struct.pack(_format, *payload)
         except OverflowError as err:
@@ -346,6 +364,12 @@ class Packet:
         Just returns the read buffer.
         """
         return read_buffer
+
+
+wait_5 = wait_6 = 0
+wait_7 = wait_8 = 0
+wait_9 = wait_10 = 0
+wait_11 = wait_5a = 0
 
 
 class MavLink:
@@ -449,6 +473,9 @@ class MavLink:
         """
         This will collect incoming commands and fire off their respective callbacks.
         """
+        global wait_5
+        global wait_5a
+        global wait_6
         self.allowed_messages([76])  # Ensure we are listening for command packets.
         global read_buffer
         if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
@@ -491,18 +518,23 @@ class MavLink:
                                 elif debug:
                                     print('received command', cmd, 'without format definition')
                                 del read_buffer[idx]
-        await asyncio.sleep(0.0018)
+                    wait_5a = await waits.wait(wait_5a)
+                else:
+                    wait_5 = await waits.wait(wait_5, 0.5)
+        # await asyncio.sleep(0.0018)
+        wait_6 = await waits.wait(wait_6, 0.5)
 
     async def heartbeat_wait(self, debug: bool = False, _uart: UART = None):
         """
         Wait for heartbeat packet.
         """
+        global wait_7
+        global wait_8
         global read_buffer
         self.allowed_messages([0])  # Listen for the heartbeat.
         beat = False
         hold = False
-        now = monotonic()
-        timeout = now + 1
+        timeout = monotonic() + 1
         while not beat and not TERM:
             if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
                 read_buffer = await uart_read(_uart, crc_check, debug)
@@ -513,14 +545,16 @@ class MavLink:
                     if debug:
                         print(
                             '\n\n\n\nfound heartbeat **************************************************************************\n\n\n\n')
-                await asyncio.sleep(0.00013)
+                # await asyncio.sleep(0.00013)
+                wait_7 = await waits.wait(wait_7)
             if hold:
                 beat = hold
-            if timeout < now:
+            if timeout < monotonic():
                 print(
                     '\n\n\n\nwarning heartbeat timed out **************************************************************************\n\n\n\n')
                 break
-            await asyncio.sleep(0.0013)
+            # await asyncio.sleep(0.0013)
+            wait_8 = await waits.wait(wait_8)
         self.allowed_messages(removals=[0])  # Quiet further messages.
         return beat
 
@@ -528,13 +562,14 @@ class MavLink:
         """
         This will wait for a command ACK up to a specific timeout.
         """
+        global wait_9
+        global wait_10
         global read_buffer
         if not self.runtime['read_loop']['running'] and _uart is not None:  # Perform a read in the event the loop isn't running.
             read_buffer = await uart_read(_uart, crc_check, debug)
         self.allowed_messages([77])  # Listen for the ACK.
         ack = False
-        now = monotonic()
-        timeout = now + 1
+        timeout = monotonic() + 1
         while not ack and not TERM:
             for idx, message in enumerate(read_buffer):
                 if message['message_id'] == 77:
@@ -545,12 +580,15 @@ class MavLink:
                             print(
                                 '\n\n\n\nfound ACK **************************************************************************\n\n\n\n')
                         break
-                await asyncio.sleep(0.00016)
-            if timeout < now:
+                # await asyncio.sleep(0.00016)
+                wait_9 = await waits.wait(wait_9)
+            if timeout < monotonic():
                 if debug:
                     print(
                         '\n\n\n\nwarning ACK timed out **************************************************************************\n\n\n\n')
-            await asyncio.sleep(0.0011)
+                break
+            # await asyncio.sleep(0.0011)
+            wait_10 = await waits.wait(wait_10)
         self.allowed_messages(removals=[77])  # Quiet further messages.
         return ack
 
@@ -616,7 +654,9 @@ class MavLink:
             await uart_write(_uart, debug)
             gc.collect()
         if target_system != 255:  # Skip ACK wait for broadcast messages.
+
             self.ack = await self.ack_wait(command_id, debug)  # noqa
+
             if not self.ack and self.retries:
                 self.retries -= 1
                 self.confirmation += 1
@@ -677,11 +717,13 @@ class MavLink:
             """
             Let's send some heartbeat packets.
             """
+            global wait_11
             global TERM
             parent.runtime['heartbeat_loop']['running'] = True
             while not TERM and not parent.runtime['heartbeat_loop']['should_exit']:
                 await parent.send_message(0, self.heartbeat_payload, c_flags=0, i_flags=0, s_id=self.system_id, c_id=self.component_id)
-                await asyncio.sleep(1)
+                # await asyncio.sleep(1)
+                wait_11 = await waits.wait(wait_11, 1)
             parent.runtime['heartbeat_loop']['should_exit'] = False
             parent.runtime['heartbeat_loop']['running'] = False
 
