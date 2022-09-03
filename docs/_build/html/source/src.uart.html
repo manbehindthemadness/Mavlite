@@ -75,6 +75,37 @@
 <span id="src-uart-module"></span><h1>src.uart module<a class="headerlink" href="#module-src.uart" title="Permalink to this heading">¶</a></h1>
 <p># Write your code here :-)</p>
 <dl class="py class">
+<dt class="sig sig-object py" id="src.uart.Equalizer">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">Equalizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spread</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#Equalizer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.Equalizer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This will issue unique task-delay values in the form of prime numbers.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="src.uart.Equalizer.assign">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">assign</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delay_var:</span> <span class="pre">[&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base:</span> <span class="pre">[&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span> <span class="pre">=</span> <span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#Equalizer.assign"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.Equalizer.assign" title="Permalink to this definition">¶</a></dt>
+<dd><p>This will assign a unique delay time.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.uart.Equalizer.get_primes">
+<span class="sig-name descname"><span class="pre">get_primes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#Equalizer.get_primes"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.Equalizer.get_primes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a unique prime delay times.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.uart.Equalizer.isprime">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">isprime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#Equalizer.isprime"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.Equalizer.isprime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines if a candidate is a prime number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="src.uart.Equalizer.wait">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">wait</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delay_var:</span> <span class="pre">[&lt;class</span> <span class="pre">'int'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base:</span> <span class="pre">[&lt;class</span> <span class="pre">'float'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;]</span> <span class="pre">=</span> <span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#Equalizer.wait"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.Equalizer.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the wait action.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="src.uart.UART">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">src.uart.</span></span><span class="sig-name descname"><span class="pre">UART</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s_id:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baudrate:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">57600</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bits:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parity:</span> <span class="pre">[None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'int'&gt;]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rxbuf:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">64</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tx:</span> <span class="pre">any</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rx:</span> <span class="pre">any</span> <span class="pre">=</span> <span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/src/uart.html#UART"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#src.uart.UART" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
