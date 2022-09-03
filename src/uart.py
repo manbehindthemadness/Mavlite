@@ -61,7 +61,7 @@ class Equalizer:
         global assignments
         for number in range(self.spread):
             if self.isprime(number) and number not in variance:
-                variance.append(number / 10000)
+                variance.append(number / 100000)
         if not assignments:
             assignments = [0] * len(variance)
         else:
