@@ -13,6 +13,7 @@ It seems that only the orientation is evaluated, not the sensor id or originatin
 """
 import random
 import time
+from led import LED
 try:
     import asyncio
 except ImportError:
@@ -77,6 +78,9 @@ SENSORS = {
 }
 
 
+led = LED()
+
+
 def test_scan():
     """
     This will fire up the multiplexer and lidar sensors to prove everything is talking the way it should.
@@ -131,6 +135,9 @@ class LiDAR:
         """
         Here we will fire up all of our sensors and tell them to start taking samples.
         """
+        led.red.value = True
+        led.blue.value = False
+        led.green.value = True
         self.test = test
         self.debug = debug
         if not self.test:
@@ -149,6 +156,17 @@ class LiDAR:
                     self.rangefinders.append(rangefinder)
                     if needs_unlock:
                         channel.unlock()
+        if len(self.rangefinders) == 6:
+            status = 'good'
+            led.red.value = True
+            led.blue.value = True
+            led.green.value = False
+        else:
+            status = 'err'
+            led.red.value = False
+            led.blue.value = True
+            led.green.value = True
+        led.rainbow_cycle(0.01, halt=status)
 
     async def mavlink_send(self, chan: int, value: int):
         """
@@ -159,7 +177,7 @@ class LiDAR:
             payload=[
                 int(monotonic()),  # boot_time
                 2,  # min_distance
-                400,  # max_distance
+                380,  # max_distance
                 int(value),  # current_distance
                 0,  # type
                 chan,  # id  # This isn't a requirement, but it's tidy.
@@ -173,7 +191,6 @@ class LiDAR:
             c_id=chan + 25,  # This isn't a requirement, but it's tidy.
             debug=self.debug
         )
-        # print('sensorID', chan, 'orient', SENSORS[chan], 'value', value)
 
     @staticmethod
     async def read_sensor(
@@ -186,7 +203,7 @@ class LiDAR:
         if channel.try_lock():
             channel.unlock()
         while not rangefinder.data_ready:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.0001)
         result = rangefinder.distance
         """
         Here we can add dynamic range mode and FOV changes should we want in the future.
@@ -194,6 +211,8 @@ class LiDAR:
         rangefinder.clear_interrupt()
         if channel.try_lock():
             channel.unlock()
+        if result is None:
+            result = 1000  # Send impossible number so ArduPilot discards the reading.
         return result
 
     async def read(self) -> list:
@@ -207,6 +226,8 @@ class LiDAR:
                         value = random.randint(1, 100)
                     else:
                         value = await self.read_sensor(self.channels[channel], rangefinder)
+                        if value is None:
+                            raise ValueError
                     await self.mavlink_send(channel, value)
 
 
@@ -214,6 +235,7 @@ async def main(read):
     """
     Test mainloop.
     """
+    print('starting')
     tasks = await ml.io_buffers(_uart, debug=False)  # [write_loop, read_loop, heartbeat_loop, command_listener]
     await asyncio.gather(read, tasks[0], tasks[2])
 
